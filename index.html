@@ -82,24 +82,17 @@
                 <div class="relative w-11 h-11 bg-slate-800 border border-orange-500/40 rounded-2xl p-1 shadow-lg shadow-orange-500/10 flex items-center justify-center robot-glow">
                     <!-- Robot Mascot Icon SVG: ບຸນມາ -->
                     <svg class="w-9 h-9" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Robot Ears/Antenna Joints -->
                         <rect x="10" y="42" width="10" height="16" rx="4" fill="#64748B"/>
                         <rect x="80" y="42" width="10" height="16" rx="4" fill="#64748B"/>
-                        <!-- Antenna Pole & Ball -->
                         <line x1="50" y1="20" x2="50" y2="10" stroke="#F97316" stroke-width="4" stroke-linecap="round"/>
                         <circle cx="50" cy="8" r="5" fill="#F97316"/>
-                        <!-- Outer Head Shape -->
                         <rect x="18" y="20" width="64" height="60" rx="18" fill="#334155" stroke="#F97316" stroke-width="3"/>
-                        <!-- Face Screen -->
                         <rect x="25" y="28" width="50" height="38" rx="10" fill="#0F172A"/>
-                        <!-- Eyes (Glowing Cyan/Orange Digital Eyes) -->
                         <circle cx="40" cy="45" r="6" fill="#38BDF8"/>
                         <circle cx="60" cy="45" r="6" fill="#38BDF8"/>
                         <circle cx="42" cy="43" r="2" fill="white"/>
                         <circle cx="62" cy="43" r="2" fill="white"/>
-                        <!-- Digital Mouth / Wave Signal -->
                         <path d="M38 56 Q50 63 62 56" stroke="#F97316" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        <!-- Orange Body Collar Accent -->
                         <path d="M32 78 L68 78 L60 90 L40 90 Z" fill="#F97316"/>
                     </svg>
                 </div>
@@ -533,7 +526,7 @@
                                 <span class="text-orange-400">✨</span>
                                 <span>Prompt ທີ່ສ້າງສໍາເລັດ</span>
                             </h3>
-                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-mono">Live Output</span>
+                            <button onclick="resetBuilder()" class="text-[11px] text-slate-400 hover:text-orange-400 transition bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">🔄 ລ້າງຂໍ້ມູນ</button>
                         </div>
 
                         <div id="output-prompt-box" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 min-h-[220px] text-xs text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all">
@@ -685,27 +678,26 @@
 
     <!-- JavaScript Application Controller -->
     <script>
-        // Tab Navigation Switcher
+        // Tab Navigation Switcher Fix
         function switchTab(tabId) {
             const tabs = ['prompt-eng', 'strategy', 'builder', 'tools'];
             tabs.forEach(id => {
                 const sec = document.getElementById(`sec-${id}`);
                 const btn = document.getElementById(`tab-btn-${id}`);
-            else if (type === 'english') {
-                role.value = "ເຈົ້າຄືອາຈານສອນພາສາອັງກິດ ແລະ ນັກແປມືອາຊີບ (Native English Tutor & Translator)";
-                task.value = "ຈົ່ງແປຂໍ້ຄວາມ ແລະ ປັບແຕ່ງປະໂຫຍກໃຫ້ເປັນພາສາອັງກິດທາງການ (Business English)";
-                context.value = "ນຳໃຊ້ສຳລັບການຕິດຕໍ່ສື່ສານ ແລະ ສົ່ງອີເມວກັບຄູ່ຄ້າຕ່າງປະເທດ";
-                format.value = "1. ປະໂຫຍກທີ່ແປແລ້ວ, 2. ຄຳສັບສຳຄັນ (Vocabulary), 3. ຕົວຢ່າງປະໂຫຍກທາງເລືອກອື່ນ (Alternative options)";
-                style.value = "";
-                aspect.value = "";
-                cot.checked = false;
-            }
+                const mobBtn = document.getElementById(`mob-tab-${id}`);
+                
+                if (id === tabId) {
+                    if (sec) sec.classList.remove('hidden');
+                    if (btn) {
+                        btn.classList.add('border-orange-500', 'text-orange-400', 'font-semibold');
+                        btn.classList.remove('border-transparent', 'text-slate-400');
+                    }
                     if (mobBtn) {
                         mobBtn.classList.add('text-orange-400', 'font-bold');
                         mobBtn.classList.remove('text-slate-400');
                     }
                 } else {
-                    sec.classList.add('hidden');
+                    if (sec) sec.classList.add('hidden');
                     if (btn) {
                         btn.classList.remove('border-orange-500', 'text-orange-400', 'font-semibold');
                         btn.classList.add('border-transparent', 'text-slate-400');
@@ -763,9 +755,9 @@
                 cot.checked = true;
             } else if (type === 'english') {
                 role.value = "ເຈົ້າຄືອາຈານສອນພາສາອັງກິດ ແລະ ນັກແປມືອາຊີບ (Native English Tutor & Translator)";
-                task.value = "ຈົ່ງແປຂໍ້ຄວາມ ແລະ ປັບແປງປະໂຫຍດໃຫ້ເປັນພາສາອັງກິດທາງການ (Business English)";
-                context.value = "ນຳໃຊ້ສຳລັບການຕິດຕໍ່ສື່ສານ ແລະ ສ່ງອີເມວກັບຄູ່ຄ້າຕ່າງປະເທດ";
-                format.value = "1. ປະໂຫຍດທີ່ແປແລ້ວ, 2. ຄຳສັບສຳຄັນ (Vocabulary), 3. ຕົວຢ່າງປະໂຫຍດທາງເລືອກອື່ນ (Alternative options)";
+                task.value = "ຈົ່ງແປຂໍ້ຄວາມ ແລະ ປັບແຕ່ງປະໂຫຍກໃຫ້ເປັນພາສາອັງກິດທາງການ (Business English)";
+                context.value = "ນຳໃຊ້ສຳລັບການຕິດຕໍ່ສື່ສານ ແລະ ສົ່ງອີເມວກັບຄູ່ຄ້າຕ່າງປະເທດ";
+                format.value = "1. ປະໂຫຍກທີ່ແປແລ້ວ, 2. ຄຳສັບສຳຄັນ (Vocabulary), 3. ຕົວຢ່າງປະໂຫຍກທາງເລືອກອື່ນ (Alternative options)";
                 style.value = "";
                 aspect.value = "";
                 cot.checked = false;
@@ -814,9 +806,23 @@
             document.getElementById('output-prompt-box').innerText = resultText;
         }
 
+        // Reset Prompt Builder Form
+        function resetBuilder() {
+            document.getElementById('builder-role').value = '';
+            document.getElementById('builder-task').value = '';
+            document.getElementById('builder-context').value = '';
+            document.getElementById('builder-format').value = '';
+            document.getElementById('img-style').value = '';
+            document.getElementById('img-aspect').value = '';
+            document.getElementById('builder-cot').checked = false;
+            updatePromptOutput();
+            showToast('ລ້າງຂໍ້ມູນเรียບຮ້ອຍ!');
+        }
+
         // Listen for user inputs in Prompt Builder
         ['builder-role', 'builder-task', 'builder-context', 'builder-format'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updatePromptOutput);
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updatePromptOutput);
         });
 
         // Copy Clipboard Helper with Fallback
@@ -850,6 +856,7 @@
         function showToast(msg) {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toast-message');
+            if (!toast || !toastMsg) return;
             toastMsg.innerText = msg;
             toast.classList.remove('translate-y-[-100px]', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
@@ -861,6 +868,7 @@
 
         // Initialize default view on load
         window.onload = function() {
+            switchTab('prompt-eng');
             applyPreset('image');
         };
     </script>
