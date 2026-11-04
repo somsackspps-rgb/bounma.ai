@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ບຸນມາ - ຫຼັກສູດ & ເຄື່ອງມື AI Prompt Engineering</title>
+    <title>Bounma AI Learning Platform 3.0</title>
+    <meta name="theme-color" content="#f97316">
+    <meta name="description" content="ແພລດຟອມຮຽນຮູ້ AI ພາສາລາວ ພ້ອມ Offline Tutor ແລະ Prompt Builder">
+    <link rel="manifest" href="manifest.json">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -65,6 +68,26 @@
             50% { opacity: 0.85; transform: scale(0.98); }
         }
     </style>
+
+<style>
+/* Bounma visual refresh: retain the original orange / charcoal identity */
+:root{color-scheme:dark}
+body{background-image:radial-gradient(ellipse at 12% 0%,rgba(249,115,22,.10),transparent 32%),radial-gradient(ellipse at 92% 18%,rgba(148,163,184,.07),transparent 28%)}
+header{box-shadow:0 12px 36px rgba(0,0,0,.22)}
+.mascot-header{filter:drop-shadow(0 0 8px rgba(249,115,22,.24));animation:mascotFloat 3.8s ease-in-out infinite;transform-origin:50% 65%}
+.robot-glow{overflow:visible;background:linear-gradient(145deg,rgba(249,115,22,.14),rgba(15,23,42,.92))!important}
+.app-card{background:linear-gradient(145deg,rgba(30,41,59,.78),rgba(15,23,42,.92));box-shadow:0 12px 28px rgba(0,0,0,.14);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.app-card:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(0,0,0,.24),0 0 0 1px rgba(249,115,22,.08)}
+.tab-btn{white-space:nowrap}
+button,a,input,select,textarea{transition:background-color .18s ease,border-color .18s ease,transform .18s ease}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #fb923c;outline-offset:3px}
+@keyframes mascotFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-5px) rotate(1deg)}}
+@keyframes softGlow{0%,100%{box-shadow:0 0 16px rgba(249,115,22,.10)}50%{box-shadow:0 0 28px rgba(249,115,22,.25)}}
+.robot-glow{animation:softGlow 4s ease-in-out infinite}
+@media(max-width:640px){header .max-w-6xl{padding-top:.65rem;padding-bottom:.65rem}.app-card{border-radius:1.15rem}.tab-btn{font-size:.78rem}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+</style>
+
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-0">
 
@@ -79,27 +102,11 @@
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
             <!-- Brand Logo & Robot Mascot "ບຸນມາ" -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('prompt-eng')">
-                <div class="relative w-11 h-11 bg-slate-800 border border-orange-500/40 rounded-2xl p-1 shadow-lg shadow-orange-500/10 flex items-center justify-center robot-glow">
-                    <!-- Robot Mascot Icon SVG: ບຸນມາ -->
-                    <svg class="w-9 h-9" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="10" y="42" width="10" height="16" rx="4" fill="#64748B"/>
-                        <rect x="80" y="42" width="10" height="16" rx="4" fill="#64748B"/>
-                        <line x1="50" y1="20" x2="50" y2="10" stroke="#F97316" stroke-width="4" stroke-linecap="round"/>
-                        <circle cx="50" cy="8" r="5" fill="#F97316"/>
-                        <rect x="18" y="20" width="64" height="60" rx="18" fill="#334155" stroke="#F97316" stroke-width="3"/>
-                        <rect x="25" y="28" width="50" height="38" rx="10" fill="#0F172A"/>
-                        <circle cx="40" cy="45" r="6" fill="#38BDF8"/>
-                        <circle cx="60" cy="45" r="6" fill="#38BDF8"/>
-                        <circle cx="42" cy="43" r="2" fill="white"/>
-                        <circle cx="62" cy="43" r="2" fill="white"/>
-                        <path d="M38 56 Q50 63 62 56" stroke="#F97316" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        <path d="M32 78 L68 78 L60 90 L40 90 Z" fill="#F97316"/>
-                    </svg>
-                </div>
+                <div class="relative w-11 h-11 bg-slate-800 border border-orange-500/40 rounded-2xl p-1 shadow-lg shadow-orange-500/10 flex items-center justify-center robot-glow"><img src="assets/bounma-mascot.png" alt="Bounma AI mascot" class="mascot-header w-full h-full object-contain"></div>
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="font-extrabold text-lg md:text-xl tracking-tight text-white">ບຸນມາ AI</h1>
-                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v2.0 PRO</span>
+                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v3.0</span>
                     </div>
                     <p class="text-xs text-slate-400">ລະບົບຮຽນຮູ້ & ເຄື່ອງມື Prompt ອັດສະລິຍະ</p>
                 </div>
@@ -117,20 +124,24 @@
             <div class="flex w-full max-w-6xl px-2 gap-2 text-sm font-medium">
                 <button id="tab-btn-prompt-eng" onclick="switchTab('prompt-eng')" class="tab-btn py-3 px-4 text-center border-b-2 border-orange-500 text-orange-400 font-semibold flex items-center gap-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    <span>1. ໂຄງສ້າງ Prompt</span>
+                    <span>ໂຄງສ້າງ Prompt</span>
                 </button>
                 <button id="tab-btn-strategy" onclick="switchTab('strategy')" class="tab-btn py-3 px-4 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    <span>2. ຍຸດທະສາດ AI (Strategy)</span>
+                    <span>ຍຸດທະສາດ AI (Strategy)</span>
                 </button>
                 <button id="tab-btn-builder" onclick="switchTab('builder')" class="tab-btn py-3 px-4 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    <span>3. ເຄື່ອງມືສ້າງ Prompt</span>
+                    <span>ເຄື່ອງມືສ້າງ Prompt</span>
                 </button>
                 <button id="tab-btn-tools" onclick="switchTab('tools')" class="tab-btn py-3 px-4 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                    <span>4. ລິ້ງແອັບ AI</span>
+                    <span>ລິ້ງແອັບ AI</span>
                 </button>
+                <button id="tab-btn-academy" onclick="switchTab('academy')" class="tab-btn py-3 px-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm">📚 ຫຼັກສູດ</button>
+                <button id="tab-btn-tutor" onclick="switchTab('tutor')" class="tab-btn py-3 px-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm">🤖 AI Tutor</button>
+                <button id="tab-btn-quiz" onclick="switchTab('quiz')" class="tab-btn py-3 px-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm">📝 ທົດສອບ</button>
+                <button id="tab-btn-progress" onclick="switchTab('progress')" class="tab-btn py-3 px-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm">📈 ຄວາມຄືບໜ້າ</button>
             </div>
         </nav>
     </header>
@@ -179,7 +190,6 @@
         <section id="sec-prompt-eng" class="tab-content space-y-6">
             <div class="border-b border-slate-800 pb-4 flex items-center justify-between">
                 <div>
-                    <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">MODULE 01</span>
                     <h2 class="text-2xl font-bold text-white">AI Prompt Engineering (ໂຄງສ້າງການຂຽນ Prompt)</h2>
                 </div>
             </div>
@@ -292,7 +302,6 @@
         <!-- ================= MODULE 2: AI STRATEGY ================= -->
         <section id="sec-strategy" class="tab-content hidden space-y-6">
             <div class="border-b border-slate-800 pb-4">
-                <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">MODULE 02</span>
                 <h2 class="text-2xl font-bold text-white">AI Strategy (ຍຸດທະສາດການເລືອກໃຊ້ເຄື່ອງມື AI)</h2>
                 <p class="text-sm text-slate-400">ເປົ້າໝາຍ: ການນຳໃຊ້ເຄື່ອງມື AI ຟຣີ (Free-tier AI Tools) ໃຫ້ເກີດປະໂຫຍດສູງສຸດຕາມປະເພດວຽກ.</p>
             </div>
@@ -428,7 +437,6 @@
         <!-- ================= MODULE 3: INTERACTIVE PROMPT BUILDER ================= -->
         <section id="sec-builder" class="tab-content hidden space-y-6">
             <div class="border-b border-slate-800 pb-4">
-                <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">MODULE 03</span>
                 <h2 class="text-2xl font-bold text-white">ເຄື່ອງມືສ້າງ Prompt ອັດສະລິຍະ (Interactive Prompt Builder)</h2>
                 <p class="text-sm text-slate-400">ເລືອກ Preset ຫຼື ຕື່ມຂໍ້ມູນໃນຟອມ ບຸນມາ ຈະຊ່ວຍສ້າງ Prompt ໃຫ້ສົມບູນແບບ!</p>
             </div>
@@ -490,10 +498,10 @@
                             <div class="grid grid-cols-2 gap-2 text-xs">
                                 <select id="img-style" onchange="updatePromptOutput()" class="bg-slate-900 border border-slate-700 text-slate-300 rounded-lg p-2 text-xs focus:outline-none">
                                     <option value="">ເລືອກ Art Style...</option>
-                                    <option value="3D Pixar Render, Cute Character">3D Pixar Cartoon</option>
-                                    <option value="Realistic Cyberpunk Style">Cyberpunk Sci-Fi</option>
-                                    <option value="Minimalist Flat Vector Art">Flat Vector Design</option>
-                                    <option value="Photorealistic Studio Lighting">Photorealistic Studio</option>
+                                    <option value="ຮູບກາຕູນ 3D ແບບໜ້າຮັກ">ກາຕູນ 3D ໜ້າຮັກ</option>
+                                    <option value="ຮູບແບບໄຊເບີພັງ ສົມຈິງ">Cyberpunk ອະນາຄົດ</option>
+                                    <option value="ຮູບພາບ Vector ແບບມິນິມອນ">Vector ມິນິມອນ</option>
+                                    <option value="ຮູບຖ່າຍສົມຈິງ ແສງສະຕູດິໂອ">ພາບສົມຈິງ</option>
                                 </select>
                                 <select id="img-aspect" onchange="updatePromptOutput()" class="bg-slate-900 border border-slate-700 text-slate-300 rounded-lg p-2 text-xs focus:outline-none">
                                     <option value="">ເລືອກ ອັດຕາສ່ວນ (Ratio)...</option>
@@ -546,7 +554,6 @@
         <!-- ================= MODULE 4: DIRECT AI TOOL LINKS ================= -->
         <section id="sec-tools" class="tab-content hidden space-y-6">
             <div class="border-b border-slate-800 pb-4">
-                <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">MODULE 04</span>
                 <h2 class="text-2xl font-bold text-white">ລິ້ງເຂົ້າໃຊ້ເຄື່ອງມື AI ຍອດນິຍົມ (AI Tools Directory)</h2>
                 <p class="text-sm text-slate-400">ຄລິກເພື່ອເປີດແອັບພລິເຄຊັນ AI ທາງການໄດ້ໂດຍตรง.</p>
             </div>
@@ -638,26 +645,42 @@
             </div>
         </section>
 
+
+        <!-- MODULE 5: LEARNING ACADEMY -->
+        <section id="sec-academy" class="tab-content hidden space-y-6">
+            <div class="border-b border-slate-800 pb-4"><span class="text-xs font-bold text-orange-400">LEARNING ACADEMY</span><h2 class="text-2xl font-bold">📚 ຫຼັກສູດຮຽນຮູ້ AI</h2><p class="text-sm text-slate-400 mt-2">ຮຽນຈາກພື້ນຖານ ໄປຫາການນຳໃຊ້ຈິງ. ບົດຮຽນຊຸດນີ້ສາມາດເປີດອ່ານໄດ້ໂດຍບໍ່ຕ້ອງຕໍ່ອິນເຕີເນັດ ຫຼັງຈາກເຂົ້າໃຊ້ຄັ້ງທຳອິດ.</p></div>
+            <div class="grid md:grid-cols-2 gap-4" id="lesson-list">
+                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 01 • BEGINNER</span><span class="text-xs text-slate-400">15 ນາທີ</span></div><h3 class="font-bold text-lg">AI ແມ່ນຫຍັງ?</h3><p class="text-sm text-slate-300">ເຂົ້າໃຈຄວາມໝາຍຂອງ Artificial Intelligence, Machine Learning ແລະ Generative AI.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຕົວຢ່າງ:</b> ໃຫ້ AI ຊ່ວຍສະຫຼຸບລາຍງານ ຫຼື ຮ່າງອີເມວ ແຕ່ຜູ້ໃຊ້ຕ້ອງກວດຄວາມຖືກຕ້ອງກ່ອນນຳໃຊ້.</div><button onclick="completeLesson(1)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
+                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 02 • BEGINNER</span><span class="text-xs text-slate-400">20 ນາທີ</span></div><h3 class="font-bold text-lg">ການຂຽນ Prompt ທີ່ດີ</h3><p class="text-sm text-slate-300">ຝຶກກຳນົດ Role, Task, Context ແລະ Format (RTCF) ໃຫ້ຄົບຖ້ວນ.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຕົວຢ່າງ:</b> “ເຈົ້າເປັນວິສະວະກອນປະປາ. ຊ່ວຍອະທິບາຍວິທີກວດປັ໊ມນ້ຳ ເປັນ 5 ຂັ້ນຕອນ.”</div><button onclick="completeLesson(2)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
+                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 03 • BEGINNER</span><span class="text-xs text-slate-400">20 ນາທີ</span></div><h3 class="font-bold text-lg">ເລືອກໃຊ້ AI ໃຫ້ເໝາະກັບວຽກ</h3><p class="text-sm text-slate-300">ຮູ້ຈັກການເລືອກ ChatGPT, Gemini ແລະ NotebookLM ຕາມລັກສະນະວຽກ.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຕົວຢ່າງ:</b> ໃຊ້ NotebookLM ສະຫຼຸບເອກະສານອ້າງອີງ; ໃຊ້ ChatGPT ຊ່ວຍຮ່າງແຜນງານ.</div><button onclick="completeLesson(3)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
+                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 04 • PRACTICE</span><span class="text-xs text-slate-400">25 ນາທີ</span></div><h3 class="font-bold text-lg">ກວດສອບຄຳຕອບຈາກ AI</h3><p class="text-sm text-slate-300">ຮຽນຮູ້ຂໍ້ຈຳກັດຂອງ AI, hallucination, ຄວາມປອດໄພຂອງຂໍ້ມູນ ແລະການກວດທານ.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຂໍ້ຄວນຈື່:</b> ຢ່າປ້ອນລະຫັດຜ່ານ ຫຼືຂໍ້ມູນລັບຂອງອົງກອນ. ກວດຕົວເລກ ແລະແຫຼ່ງອ້າງອີງກ່ອນເຊື່ອຄຳຕອບ.</div><button onclick="completeLesson(4)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
+            </div>
+        </section>
+
+        <!-- MODULE 6: OFFLINE TUTOR -->
+        <section id="sec-tutor" class="tab-content hidden space-y-6">
+            <div><span class="text-xs font-bold text-orange-400">OFFLINE KNOWLEDGE ASSISTANT</span><h2 class="text-2xl font-bold">🤖 ຖາມ-ຕອບກັບບຸນມາ Tutor</h2><p class="text-sm text-slate-400 mt-2">ຜູ້ຊ່ວຍນີ້ໃຊ້ຖານຄວາມຮູ້ທີ່ຕິດຕັ້ງມາໃນແອັບ ແລະສາມາດໃຊ້ Offline ໄດ້. ບໍ່ແມ່ນ Generative AI ແລະບໍ່ສາມາດຕອບທຸກຄຳຖາມໄດ້.</p></div>
+            <div class="app-card rounded-3xl p-4 md:p-6 space-y-4"><div id="tutor-chat" class="space-y-3 min-h-40 max-h-96 overflow-y-auto custom-scrollbar"><div class="bg-slate-900 rounded-2xl p-4 text-sm max-w-3xl">ສະບາຍດີ! ຂ້ອຍແມ່ນບຸນມາ Tutor. ລອງຖາມກ່ຽວກັບ AI, Prompt, RTCF ຫຼືການໃຊ້ AI ຢ່າງປອດໄພ.</div></div><div class="flex flex-wrap gap-2"><button onclick="askTutor('Prompt ແມ່ນຫຍັງ?')" class="text-xs bg-slate-800 px-3 py-2 rounded-full">Prompt ແມ່ນຫຍັງ?</button><button onclick="askTutor('RTCF ແມ່ນຫຍັງ?')" class="text-xs bg-slate-800 px-3 py-2 rounded-full">RTCF ແມ່ນຫຍັງ?</button><button onclick="askTutor('AI ມີຂໍ້ຈຳກັດຫຍັງ?')" class="text-xs bg-slate-800 px-3 py-2 rounded-full">ຂໍ້ຈຳກັດ AI</button></div><form onsubmit="event.preventDefault();askTutor(document.getElementById('tutor-input').value);document.getElementById('tutor-input').value='';" class="flex gap-2"><input id="tutor-input" class="min-w-0 flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm" placeholder="ພິມຄຳຖາມຂອງທ່ານ..." aria-label="ຄຳຖາມ"><button class="bg-orange-600 px-5 rounded-xl font-bold text-sm">ສົ່ງ</button></form></div>
+        </section>
+
+        <!-- MODULE 7: QUIZ -->
+        <section id="sec-quiz" class="tab-content hidden space-y-6"><div><span class="text-xs font-bold text-orange-400">KNOWLEDGE CHECK</span><h2 class="text-2xl font-bold">📝 ແບບທົດສອບຄວາມຮູ້ AI</h2><p class="text-sm text-slate-400 mt-2">ເລືອກຄຳຕອບທີ່ຖືກຕ້ອງ ແລ້ວກົດສົ່ງຄຳຕອບ.</p></div><div id="quiz-container" class="app-card rounded-3xl p-5 md:p-7 space-y-5"><div id="quiz-questions" class="space-y-5"></div><button onclick="submitQuiz()" class="bg-orange-600 px-6 py-3 rounded-xl font-bold">ກວດຄຳຕອບ</button><div id="quiz-result" class="text-sm font-bold" aria-live="polite"></div></div></section>
+
+        <!-- MODULE 8: PROGRESS -->
+        <section id="sec-progress" class="tab-content hidden space-y-6"><div><span class="text-xs font-bold text-orange-400">LEARNING ANALYTICS</span><h2 class="text-2xl font-bold">📈 ຄວາມຄືບໜ້າການຮຽນ</h2><p class="text-sm text-slate-400 mt-2">ຂໍ້ມູນຈະບັນທຶກໃນ Browser ຂອງອຸປະກອນນີ້.</p></div><div class="grid grid-cols-2 gap-4"><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ບົດຮຽນທີ່ສຳເລັດ</p><p id="progress-lessons" class="text-3xl font-extrabold text-orange-400 mt-2">0 / 4</p></div><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ຄະແນນທົດສອບຫຼ້າສຸດ</p><p id="progress-score" class="text-3xl font-extrabold text-orange-400 mt-2">-</p></div></div><div class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between text-sm"><span>ຄວາມຄືບໜ້າລວມ</span><span id="progress-percent">0%</span></div><div class="h-3 bg-slate-800 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-orange-500 rounded-full" style="width:0%"></div></div><div class="flex flex-wrap gap-2"><button onclick="exportProgress()" class="bg-slate-700 px-4 py-2 rounded-xl text-sm">ສຳຮອງຂໍ້ມູນ</button><label class="bg-slate-700 px-4 py-2 rounded-xl text-sm cursor-pointer">ນຳເຂົ້າຂໍ້ມູນ<input type="file" accept="application/json" onchange="importProgress(event)" class="hidden"></label><button onclick="resetProgress()" class="bg-red-900/70 px-4 py-2 rounded-xl text-sm">ລ້າງຄວາມຄືບໜ້າ</button></div></div></section>
+
     </main>
 
     <!-- Mobile Bottom Navigation Bar -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-50 px-2 py-1.5 flex justify-around text-[11px]">
-        <button onclick="switchTab('prompt-eng')" id="mob-tab-prompt-eng" class="flex flex-col items-center gap-1 py-1 px-3 text-orange-400 font-bold">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-            <span>ໂຄງສ້າງ</span>
-        </button>
-        <button onclick="switchTab('strategy')" id="mob-tab-strategy" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            <span>ຍຸດທະສາດ</span>
-        </button>
-        <button onclick="switchTab('builder')" id="mob-tab-builder" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-            <span>ສ້າງ Prompt</span>
-        </button>
-        <button onclick="switchTab('tools')" id="mob-tab-tools" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-            <span>ແອັບ AI</span>
-        </button>
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-50 px-1 py-2 flex justify-start overflow-x-auto gap-1 text-[10px]">
+        <button onclick="switchTab('prompt-eng')" id="mob-tab-prompt-eng" class="flex-shrink-0 px-3 py-1 text-orange-400 font-bold">💡<br>Prompt</button>
+        <button onclick="switchTab('strategy')" id="mob-tab-strategy" class="flex-shrink-0 px-3 py-1 text-slate-400">⚡<br>Strategy</button>
+        <button onclick="switchTab('builder')" id="mob-tab-builder" class="flex-shrink-0 px-3 py-1 text-slate-400">✍️<br>Builder</button>
+        <button onclick="switchTab('tools')" id="mob-tab-tools" class="flex-shrink-0 px-3 py-1 text-slate-400">🔗<br>AI Apps</button>
+        <button onclick="switchTab('academy')" id="mob-tab-academy" class="flex-shrink-0 px-3 py-1 text-slate-400">📚<br>ຮຽນ</button>
+        <button onclick="switchTab('tutor')" id="mob-tab-tutor" class="flex-shrink-0 px-3 py-1 text-slate-400">🤖<br>Tutor</button>
+        <button onclick="switchTab('quiz')" id="mob-tab-quiz" class="flex-shrink-0 px-3 py-1 text-slate-400">📝<br>Quiz</button>
+        <button onclick="switchTab('progress')" id="mob-tab-progress" class="flex-shrink-0 px-3 py-1 text-slate-400">📈<br>ຜົນ</button>
     </nav>
 
     <!-- Application Footer -->
@@ -680,7 +703,7 @@
     <script>
         // Tab Navigation Switcher Fix
         function switchTab(tabId) {
-            const tabs = ['prompt-eng', 'strategy', 'builder', 'tools'];
+            const tabs = ['prompt-eng', 'strategy', 'builder', 'tools', 'academy', 'tutor', 'quiz', 'progress'];
             tabs.forEach(id => {
                 const sec = document.getElementById(`sec-${id}`);
                 const btn = document.getElementById(`tab-btn-${id}`);
@@ -722,10 +745,10 @@
             const cot = document.getElementById('builder-cot');
 
             if (type === 'image') {
-                role.value = "A professional 3D Concept Artist & AI Art Prompt Specialist";
-                task.value = "Create a cute orange and dark-grey AI Assistant Robot character mascot named Bounma";
-                context.value = "Friendly glowing digital blue eyes, futuristic desktop setup, clean dark background, sleek polished metallic finish";
-                format.value = "8k resolution, Unreal Engine 5 render, Octane Render, Studio Lighting, Volumetric Light";
+                role.value = "ເຈົ້າຄືນັກອອກແບບຮູບພາບ 3D ແລະ ຜູ້ຊ່ຽວຊານການຂຽນ Prompt ສ້າງຮູບພາບ";
+                task.value = "ສ້າງຮູບຫຸ່ນຍົນຜູ້ຊ່ວຍ AI ຊື່ ບຸນມາ ເປັນຕົວລະຄອນໜ້າຮັກ ມີສີສົ້ມ ແລະ ສີເທົາເຂັ້ມ";
+                context.value = "ມີດວງຕາສີຟ້າເປັ່ງປະກາຍ ທ່າທາງເປັນມິດ ອອກແບບແບບອະນາຄົດ ພື້ນຫຼັງສີເຂັ້ມ ວັດສະດຸໂລຫະເງົາງາມ";
+                format.value = "ຄວາມລະອຽດສູງ 8K, ພາບ 3D ຄົມຊັດ, ແສງສະຕູດິໂອ, ແສງເງົາສົມຈິງ, ມຸມມອງສວຍງາມ";
                 style.value = "3D Pixar Render, Cute Character";
                 aspect.value = "--ar 1:1";
                 cot.checked = false;
@@ -831,8 +854,13 @@
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
                     showToast('ຄັດລອກຂໍ້ຄວາມຮຽບຮ້ອຍແລ້ວ!');
-                });
+                }).catch(() => { fallbackCopy(text); });
             } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
                 const textArea = document.createElement("textarea");
                 textArea.value = text;
                 document.body.appendChild(textArea);
@@ -844,7 +872,6 @@
                     showToast('ບໍ່ສາມາດຄັດລອກໄດ້');
                 }
                 document.body.removeChild(textArea);
-            }
         }
 
         function copyGeneratedPrompt() {
@@ -866,10 +893,37 @@
             }, 2500);
         }
 
+
+        // Bounma 3.0: local learning progress
+        const progressKey = 'bounmaAI_v3_progress';
+        function getProgress() { try { return JSON.parse(localStorage.getItem(progressKey)) || { lessons: [], score: null }; } catch(e) { return { lessons: [], score: null }; } }
+        function saveProgress(data) { localStorage.setItem(progressKey, JSON.stringify(data)); renderProgress(); }
+        function completeLesson(id) { const data=getProgress(); if(!data.lessons.includes(id)) data.lessons.push(id); saveProgress(data); showToast('ບັນທຶກບົດຮຽນແລ້ວ'); }
+        function renderProgress() { const d=getProgress(), n=d.lessons.length, pct=Math.round(n/4*100); const a=document.getElementById('progress-lessons'); if(a)a.textContent=`${n} / 4`; const b=document.getElementById('progress-score'); if(b)b.textContent=d.score===null?'-':`${d.score}%`; const c=document.getElementById('progress-percent'); if(c)c.textContent=pct+'%'; const bar=document.getElementById('progress-bar'); if(bar)bar.style.width=pct+'%'; }
+        const tutorKB = [
+          {keys:['prompt','ພຣອມ','ຄຳສັ່ງ'],answer:'Prompt ແມ່ນຂໍ້ຄວາມ ຫຼືຄຳສັ່ງທີ່ຜູ້ໃຊ້ປ້ອນໃຫ້ AI ເພື່ອກຳນົດວ່າຕ້ອງການໃຫ້ AI ເຮັດຫຍັງ. Prompt ທີ່ດີຄວນລະບຸໜ້າວຽກ, ຂໍ້ມູນປະກອບ ແລະຮູບແບບຄຳຕອບ.'},
+          {keys:['rtcf'],answer:'RTCF ປະກອບມີ 4 ສ່ວນ: Role (ບົດບາດ), Task (ວຽກທີ່ຕ້ອງເຮັດ), Context (ບໍລິບົດ/ເງື່ອນໄຂ) ແລະ Format (ຮູບແບບຄຳຕອບ). ຕົວຢ່າງ: ເຈົ້າເປັນຄູສອນ, ອະທິບາຍວິທີໃຊ້ AI, ສຳລັບຜູ້ເລີ່ມ, ຂຽນເປັນ 5 ຂໍ້.'},
+          {keys:['machine learning','ຮຽນຮູ້ຂອງເຄື່ອງ'],answer:'Machine Learning ແມ່ນສາຂາໜຶ່ງຂອງ AI ທີ່ໃຫ້ຄອມພິວເຕີຮຽນຮູ້ຮູບແບບຈາກຂໍ້ມູນ ເພື່ອຄາດຄະເນ ຫຼືຈັດປະເພດ ໂດຍບໍ່ຕ້ອງຂຽນກົດທຸກກໍລະນີແບບຕາຍຕົວ.'},
+          {keys:['hallucination','ຂໍ້ມູນຜິດ','ຜິດພາດ'],answer:'AI hallucination ແມ່ນກໍລະນີທີ່ AI ສ້າງຄຳຕອບທີ່ຟັງເບິ່ງໜ້າເຊື່ອຖື ແຕ່ບໍ່ຖືກຕ້ອງ ຫຼືບໍ່ມີຫຼັກຖານ. ຄວນກວດກັບແຫຼ່ງຂໍ້ມູນຈິງ ໂດຍສະເພາະຕົວເລກ, ກົດໝາຍ ແລະຂໍ້ມູນວິສະວະກຳ.'},
+          {keys:['ປອດໄພ','privacy','ຂໍ້ມູນລັບ'],answer:'ຫຼັກຄວາມປອດໄພ: ຢ່າປ້ອນລະຫັດຜ່ານ, ຂໍ້ມູນສ່ວນບຸກຄົນ ຫຼືເອກະສານລັບຂອງອົງກອນໃນ AI ສາທາລະນະ. ກວດນະໂຍບາຍຂໍ້ມູນຂອງແພລດຟອມກ່ອນນຳໃຊ້.'},
+          {keys:['chatgpt','gemini','notebooklm'],answer:'ເລືອກເຄື່ອງມືຕາມວຽກ: ChatGPT ຫຼື Gemini ເໝາະກັບການຮ່າງ, ວິເຄາະ ແລະລະດົມຄວາມຄິດ; NotebookLM ເໝາະກັບການຖາມ-ຕອບຈາກເອກະສານທີ່ຜູ້ໃຊ້ນຳເຂົ້າ. ຄວນກວດຄວາມສາມາດ ແລະນະໂຍບາຍລ່າສຸດຂອງແຕ່ລະບໍລິການ.'}
+        ];
+        function askTutor(q) { q=(q||'').trim(); if(!q)return; const chat=document.getElementById('tutor-chat'); const u=document.createElement('div');u.className='ml-auto bg-orange-600/20 border border-orange-500/30 rounded-2xl p-3 text-sm max-w-3xl';u.textContent=q;chat.appendChild(u); const lower=q.toLowerCase(); const hit=tutorKB.find(x=>x.keys.some(k=>lower.includes(k))); const a=document.createElement('div');a.className='bg-slate-900 rounded-2xl p-4 text-sm max-w-3xl';a.textContent=hit?hit.answer:'ຂໍອະໄພ, ຖານຄວາມຮູ້ Offline ຂອງຂ້ອຍຍັງບໍ່ມີຄຳຕອບສຳລັບຫົວຂໍ້ນີ້. ລອງຖາມເລື່ອງ Prompt, RTCF, Machine Learning, AI hallucination ຫຼືຄວາມປອດໄພຂອງ AI.';chat.appendChild(a);chat.scrollTop=chat.scrollHeight; }
+        const quizData=[{q:'Prompt ແມ່ນຫຍັງ?',o:['ຂໍ້ຄວາມຄຳສັ່ງໃຫ້ AI','ຊື່ຄອມພິວເຕີ','ລະຫັດຜ່ານ'],a:0},{q:'ຕົວ R ໃນ RTCF ໝາຍເຖິງຫຍັງ?',o:['Result','Role','Report'],a:1},{q:'Context ໃນ Prompt ແມ່ນຫຍັງ?',o:['ສີຂອງໜ້າຈໍ','ບໍລິບົດ ແລະເງື່ອນໄຂ','ຊື່ AI'],a:1},{q:'ເມື່ອ AI ໃຫ້ຕົວເລກທາງວິສະວະກຳ ຄວນເຮັດແນວໃດ?',o:['ເຊື່ອທັນທີ','ສົ່ງຕໍ່ທັນທີ','ກວດສອບກັບແຫຼ່ງຂໍ້ມູນ'],a:2},{q:'AI Tutor ໃນເວີຊັນນີ້ເຮັດວຽກແນວໃດ?',o:['ຄົ້ນຫາທຸກເວັບໄຊ','ຈັບຄູ່ຄຳຖາມກັບຖານຄວາມຮູ້ພາຍໃນ','ໃຊ້ LLM ຜ່ານ API'],a:1}];
+        function renderQuiz(){const root=document.getElementById('quiz-questions');if(!root)return;root.innerHTML=quizData.map((q,i)=>`<fieldset class="border-b border-slate-700 pb-4"><legend class="font-bold mb-3">${i+1}. ${q.q}</legend>${q.o.map((o,j)=>`<label class="flex gap-2 items-center text-sm py-1 text-slate-300"><input type="radio" name="quiz-${i}" value="${j}" class="accent-orange-500"> ${o}</label>`).join('')}</fieldset>`).join('');}
+        function submitQuiz(){let score=0,answered=0;quizData.forEach((q,i)=>{const v=document.querySelector(`input[name="quiz-${i}"]:checked`);if(v){answered++;if(Number(v.value)===q.a)score++;}});if(answered<quizData.length){showToast('ກະລຸນາຕອບໃຫ້ຄົບທຸກຂໍ້');return;}const pct=Math.round(score/quizData.length*100);const d=getProgress();d.score=pct;saveProgress(d);document.getElementById('quiz-result').textContent=`ຜົນຄະແນນ: ${score}/${quizData.length} (${pct}%). ${pct>=80?'ດີຫຼາຍ!':'ຄວນທົບທວນບົດຮຽນ ແລ້ວລອງໃໝ່.'}`;}
+        function exportProgress(){const blob=new Blob([JSON.stringify(getProgress(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='bounma-progress-backup.json';a.click();URL.revokeObjectURL(a.href);}
+        function importProgress(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.lessons))throw Error();saveProgress({lessons:d.lessons.filter(x=>[1,2,3,4].includes(x)),score:Number.isFinite(d.score)?d.score:null});showToast('ນຳເຂົ້າຂໍ້ມູນສຳເລັດ');}catch(err){showToast('ໄຟລ໌ສຳຮອງບໍ່ຖືກຕ້ອງ');}};r.readAsText(f);}
+        function resetProgress(){if(!confirm('ຢືນຢັນລ້າງຄວາມຄືບໜ້າທັງໝົດ?'))return;localStorage.removeItem(progressKey);renderProgress();showToast('ລ້າງຂໍ້ມູນແລ້ວ');}
+
+
         // Initialize default view on load
         window.onload = function() {
             switchTab('prompt-eng');
             applyPreset('image');
+            renderQuiz();
+            renderProgress();
+            if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed', err));
         };
     </script>
 </body>

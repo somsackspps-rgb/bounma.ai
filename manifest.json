@@ -1,0 +1,19 @@
+{
+  "name": "Bounma AI Learning Platform",
+  "short_name": "Bounma AI",
+  "description": "ແພລດຟອມຮຽນຮູ້ AI ພາສາລາວ",
+  "lang": "lo",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "assets/bounma-mascot.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
