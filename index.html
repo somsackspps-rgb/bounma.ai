@@ -86,6 +86,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .robot-glow{animation:softGlow 4s ease-in-out infinite}
 @media(max-width:640px){header .max-w-6xl{padding-top:.65rem;padding-bottom:.65rem}.app-card{border-radius:1.15rem}.tab-btn{font-size:.78rem}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+.opt{display:flex;gap:.6rem;align-items:center;padding:.65rem .8rem;border:1px solid #334155;border-radius:.8rem;margin-top:.45rem;font-size:.875rem;color:#cbd5e1;cursor:pointer}
+.opt:hover{border-color:rgba(249,115,22,.5)}.opt.ok{border-color:#10b981;background:rgba(16,185,129,.12);color:#a7f3d0}.opt.bad{border-color:#ef4444;background:rgba(239,68,68,.12);color:#fecaca}
+details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-marker{display:none}
+.chip{font-size:.75rem;background:#1e293b;border:1px solid #334155;padding:.5rem .8rem;border-radius:9999px}.chip:hover{border-color:#f97316}
+.chip-on{background:#ea580c;border-color:#f97316;color:#fff}
 </style>
 
 </head>
@@ -101,12 +106,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
             <!-- Brand Logo & Robot Mascot "ບຸນມາ" -->
-            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('prompt-eng')">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('dashboard')">
                 <div class="relative w-11 h-11 bg-slate-800 border border-orange-500/40 rounded-2xl p-1 shadow-lg shadow-orange-500/10 flex items-center justify-center robot-glow"><img src="assets/bounma-mascot.png" alt="Bounma AI mascot" class="mascot-header w-full h-full object-contain"></div>
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="font-extrabold text-lg md:text-xl tracking-tight text-white">ບຸນມາ AI</h1>
-                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v3.0</span>
+                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v3.1</span>
                     </div>
                     <p class="text-xs text-slate-400">ລະບົບຮຽນຮູ້ & ເຄື່ອງມື Prompt ອັດສະລິຍະ</p>
                 </div>
@@ -122,7 +127,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <!-- Desktop Navigation Bar -->
         <nav class="hidden md:flex justify-center border-t border-slate-800/80 bg-slate-900/70">
             <div class="flex w-full max-w-6xl px-2 gap-2 text-sm font-medium">
-                <button id="tab-btn-prompt-eng" onclick="switchTab('prompt-eng')" class="tab-btn py-3 px-4 text-center border-b-2 border-orange-500 text-orange-400 font-semibold flex items-center gap-2 transition">
+                <button id="tab-btn-dashboard" onclick="switchTab('dashboard')" class="tab-btn py-3 px-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm">🏠 ໜ້າຫຼັກ</button>
+                <button id="tab-btn-prompt-eng" onclick="switchTab('prompt-eng')" class="tab-btn py-3 px-4 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                     <span>ໂຄງສ້າງ Prompt</span>
                 </button>
@@ -150,7 +156,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 space-y-8">
 
         <!-- Welcome Mascot Card -->
-        <section class="app-card rounded-3xl p-6 md:p-8 relative overflow-hidden border border-orange-500/20 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800">
+        <section id="welcome-card" class="app-card rounded-3xl p-6 md:p-8 relative overflow-hidden border border-orange-500/20 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800">
             <div class="absolute -right-12 -bottom-12 w-56 h-56 bg-orange-600/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="flex flex-col md:flex-row items-center gap-6 relative z-10">
                 <!-- Large Robot Mascot Graphics -->
@@ -186,8 +192,34 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
             </div>
         </section>
 
+        <!-- MODULE 0: DASHBOARD -->
+        <section id="sec-dashboard" class="tab-content space-y-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                <div class="app-card rounded-2xl p-4"><p class="text-xs text-slate-400">ບົດຮຽນທີ່ສຳເລັດ</p><p id="dash-lessons" class="text-2xl md:text-3xl font-extrabold text-orange-400 mt-1">0 / 8</p></div>
+                <div class="app-card rounded-2xl p-4"><p class="text-xs text-slate-400">ຄວາມຄືບໜ້າ</p><p id="dash-percent" class="text-2xl md:text-3xl font-extrabold text-orange-400 mt-1">0%</p></div>
+                <div class="app-card rounded-2xl p-4"><p class="text-xs text-slate-400">ຄະແນນຫຼ້າສຸດ</p><p id="dash-score" class="text-2xl md:text-3xl font-extrabold text-orange-400 mt-1">-</p></div>
+                <div class="app-card rounded-2xl p-4"><p class="text-xs text-slate-400">ຄະແນນສູງສຸດ</p><p id="dash-best" class="text-2xl md:text-3xl font-extrabold text-orange-400 mt-1">-</p></div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="app-card rounded-2xl p-5 md:col-span-2 space-y-3">
+                    <p class="text-xs font-bold text-orange-400">ຮຽນຕໍ່ຈາກບ່ອນທີ່ຄ້າງໄວ້</p>
+                    <h3 id="dash-next-title" class="text-lg font-bold"></h3>
+                    <div class="h-3 bg-slate-800 rounded-full overflow-hidden"><div id="dash-bar" class="h-full bg-orange-500 rounded-full transition-all duration-500" style="width:0%"></div></div>
+                    <p id="dash-msg" class="text-sm text-slate-300"></p>
+                    <button id="dash-next-btn" class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-sm font-bold">ເລີ່ມຮຽນ</button>
+                </div>
+                <div class="app-card rounded-2xl p-5 space-y-2"><p class="text-xs font-bold text-orange-400">💡 ຄຳແນະນຳມື້ນີ້</p><p id="dash-tip" class="text-sm text-slate-300 leading-relaxed"></p></div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button onclick="switchTab('academy')" class="app-card rounded-2xl p-4 text-left"><span class="text-2xl">📚</span><p class="font-bold mt-2 text-sm">ຫຼັກສູດ</p><p class="text-xs text-slate-400">8 ບົດຮຽນ</p></button>
+                <button onclick="switchTab('tutor')" class="app-card rounded-2xl p-4 text-left"><span class="text-2xl">🤖</span><p class="font-bold mt-2 text-sm">ຖາມ Tutor</p><p class="text-xs text-slate-400">ໃຊ້ Offline ໄດ້</p></button>
+                <button onclick="switchTab('quiz')" class="app-card rounded-2xl p-4 text-left"><span class="text-2xl">📝</span><p class="font-bold mt-2 text-sm">ທົດສອບ</p><p class="text-xs text-slate-400">ສຸ່ມ 8 ຂໍ້</p></button>
+                <button onclick="switchTab('builder')" class="app-card rounded-2xl p-4 text-left"><span class="text-2xl">✍️</span><p class="font-bold mt-2 text-sm">ສ້າງ Prompt</p><p class="text-xs text-slate-400">RTCF Builder</p></button>
+            </div>
+        </section>
+
         <!-- ================= MODULE 1: PROMPT ENGINEERING ================= -->
-        <section id="sec-prompt-eng" class="tab-content space-y-6">
+        <section id="sec-prompt-eng" class="tab-content hidden space-y-6">
             <div class="border-b border-slate-800 pb-4 flex items-center justify-between">
                 <div>
                     <h2 class="text-2xl font-bold text-white">AI Prompt Engineering (ໂຄງສ້າງການຂຽນ Prompt)</h2>
@@ -648,32 +680,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
         <!-- MODULE 5: LEARNING ACADEMY -->
         <section id="sec-academy" class="tab-content hidden space-y-6">
-            <div class="border-b border-slate-800 pb-4"><span class="text-xs font-bold text-orange-400">LEARNING ACADEMY</span><h2 class="text-2xl font-bold">📚 ຫຼັກສູດຮຽນຮູ້ AI</h2><p class="text-sm text-slate-400 mt-2">ຮຽນຈາກພື້ນຖານ ໄປຫາການນຳໃຊ້ຈິງ. ບົດຮຽນຊຸດນີ້ສາມາດເປີດອ່ານໄດ້ໂດຍບໍ່ຕ້ອງຕໍ່ອິນເຕີເນັດ ຫຼັງຈາກເຂົ້າໃຊ້ຄັ້ງທຳອິດ.</p></div>
-            <div class="grid md:grid-cols-2 gap-4" id="lesson-list">
-                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 01 • BEGINNER</span><span class="text-xs text-slate-400">15 ນາທີ</span></div><h3 class="font-bold text-lg">AI ແມ່ນຫຍັງ?</h3><p class="text-sm text-slate-300">ເຂົ້າໃຈຄວາມໝາຍຂອງ Artificial Intelligence, Machine Learning ແລະ Generative AI.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຕົວຢ່າງ:</b> ໃຫ້ AI ຊ່ວຍສະຫຼຸບລາຍງານ ຫຼື ຮ່າງອີເມວ ແຕ່ຜູ້ໃຊ້ຕ້ອງກວດຄວາມຖືກຕ້ອງກ່ອນນຳໃຊ້.</div><button onclick="completeLesson(1)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
-                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 02 • BEGINNER</span><span class="text-xs text-slate-400">20 ນາທີ</span></div><h3 class="font-bold text-lg">ການຂຽນ Prompt ທີ່ດີ</h3><p class="text-sm text-slate-300">ຝຶກກຳນົດ Role, Task, Context ແລະ Format (RTCF) ໃຫ້ຄົບຖ້ວນ.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຕົວຢ່າງ:</b> “ເຈົ້າເປັນວິສະວະກອນປະປາ. ຊ່ວຍອະທິບາຍວິທີກວດປັ໊ມນ້ຳ ເປັນ 5 ຂັ້ນຕອນ.”</div><button onclick="completeLesson(2)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
-                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 03 • BEGINNER</span><span class="text-xs text-slate-400">20 ນາທີ</span></div><h3 class="font-bold text-lg">ເລືອກໃຊ້ AI ໃຫ້ເໝາະກັບວຽກ</h3><p class="text-sm text-slate-300">ຮູ້ຈັກການເລືອກ ChatGPT, Gemini ແລະ NotebookLM ຕາມລັກສະນະວຽກ.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຕົວຢ່າງ:</b> ໃຊ້ NotebookLM ສະຫຼຸບເອກະສານອ້າງອີງ; ໃຊ້ ChatGPT ຊ່ວຍຮ່າງແຜນງານ.</div><button onclick="completeLesson(3)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
-                <article class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON 04 • PRACTICE</span><span class="text-xs text-slate-400">25 ນາທີ</span></div><h3 class="font-bold text-lg">ກວດສອບຄຳຕອບຈາກ AI</h3><p class="text-sm text-slate-300">ຮຽນຮູ້ຂໍ້ຈຳກັດຂອງ AI, hallucination, ຄວາມປອດໄພຂອງຂໍ້ມູນ ແລະການກວດທານ.</p><div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຂໍ້ຄວນຈື່:</b> ຢ່າປ້ອນລະຫັດຜ່ານ ຫຼືຂໍ້ມູນລັບຂອງອົງກອນ. ກວດຕົວເລກ ແລະແຫຼ່ງອ້າງອີງກ່ອນເຊື່ອຄຳຕອບ.</div><button onclick="completeLesson(4)" class="px-4 py-2 rounded-xl bg-orange-600 text-sm font-bold">ໝາຍວ່າຮຽນແລ້ວ</button></article>
-            </div>
+            <div class="border-b border-slate-800 pb-4"><span class="text-xs font-bold text-orange-400">LEARNING ACADEMY</span><h2 class="text-2xl font-bold">📚 ຫຼັກສູດຮຽນຮູ້ AI</h2><p class="text-sm text-slate-400 mt-2">8 ບົດຮຽນ ຈາກພື້ນຖານໄປຫາການນຳໃຊ້ຈິງ. ເປີດອ່ານ Offline ໄດ້ຫຼັງເຂົ້າໃຊ້ຄັ້ງທຳອິດ.</p></div>
+            <div class="flex flex-wrap gap-2" id="lesson-filter"></div>
+            <div class="grid md:grid-cols-2 gap-4" id="lesson-list"></div>
         </section>
 
-        <!-- MODULE 6: OFFLINE TUTOR -->
         <section id="sec-tutor" class="tab-content hidden space-y-6">
-            <div><span class="text-xs font-bold text-orange-400">OFFLINE KNOWLEDGE ASSISTANT</span><h2 class="text-2xl font-bold">🤖 ຖາມ-ຕອບກັບບຸນມາ Tutor</h2><p class="text-sm text-slate-400 mt-2">ຜູ້ຊ່ວຍນີ້ໃຊ້ຖານຄວາມຮູ້ທີ່ຕິດຕັ້ງມາໃນແອັບ ແລະສາມາດໃຊ້ Offline ໄດ້. ບໍ່ແມ່ນ Generative AI ແລະບໍ່ສາມາດຕອບທຸກຄຳຖາມໄດ້.</p></div>
-            <div class="app-card rounded-3xl p-4 md:p-6 space-y-4"><div id="tutor-chat" class="space-y-3 min-h-40 max-h-96 overflow-y-auto custom-scrollbar"><div class="bg-slate-900 rounded-2xl p-4 text-sm max-w-3xl">ສະບາຍດີ! ຂ້ອຍແມ່ນບຸນມາ Tutor. ລອງຖາມກ່ຽວກັບ AI, Prompt, RTCF ຫຼືການໃຊ້ AI ຢ່າງປອດໄພ.</div></div><div class="flex flex-wrap gap-2"><button onclick="askTutor('Prompt ແມ່ນຫຍັງ?')" class="text-xs bg-slate-800 px-3 py-2 rounded-full">Prompt ແມ່ນຫຍັງ?</button><button onclick="askTutor('RTCF ແມ່ນຫຍັງ?')" class="text-xs bg-slate-800 px-3 py-2 rounded-full">RTCF ແມ່ນຫຍັງ?</button><button onclick="askTutor('AI ມີຂໍ້ຈຳກັດຫຍັງ?')" class="text-xs bg-slate-800 px-3 py-2 rounded-full">ຂໍ້ຈຳກັດ AI</button></div><form onsubmit="event.preventDefault();askTutor(document.getElementById('tutor-input').value);document.getElementById('tutor-input').value='';" class="flex gap-2"><input id="tutor-input" class="min-w-0 flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm" placeholder="ພິມຄຳຖາມຂອງທ່ານ..." aria-label="ຄຳຖາມ"><button class="bg-orange-600 px-5 rounded-xl font-bold text-sm">ສົ່ງ</button></form></div>
+            <div><span class="text-xs font-bold text-orange-400">OFFLINE KNOWLEDGE ASSISTANT</span><h2 class="text-2xl font-bold">🤖 ຖາມ-ຕອບກັບບຸນມາ Tutor</h2><p class="text-sm text-slate-400 mt-2">ຕອບຈາກຖານຄວາມຮູ້ໃນແອັບ (<span id="kb-count">20</span> ຫົວຂໍ້) ໃຊ້ Offline ໄດ້. ບໍ່ແມ່ນ Generative AI ຈຶ່ງບໍ່ສາມາດຕອບທຸກຄຳຖາມ.</p></div>
+            <div class="app-card rounded-3xl p-4 md:p-6 space-y-4"><div id="tutor-chat" aria-live="polite" class="space-y-3 min-h-40 max-h-96 overflow-y-auto custom-scrollbar"><div class="bg-slate-900 rounded-2xl p-4 text-sm max-w-3xl">ສະບາຍດີ! ຂ້ອຍແມ່ນບຸນມາ Tutor. ກົດຫົວຂໍ້ລຸ່ມນີ້ ຫຼືພິມຄຳຖາມເອງ.</div></div><div class="flex flex-wrap gap-2" id="tutor-chips"></div><form onsubmit="event.preventDefault();var i=document.getElementById('tutor-input');askTutor(i.value);i.value='';" class="flex gap-2"><input id="tutor-input" class="min-w-0 flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm" placeholder="ພິມຄຳຖາມຂອງທ່ານ..." aria-label="ຄຳຖາມ"><button class="bg-orange-600 px-5 rounded-xl font-bold text-sm">ສົ່ງ</button></form></div>
         </section>
 
-        <!-- MODULE 7: QUIZ -->
-        <section id="sec-quiz" class="tab-content hidden space-y-6"><div><span class="text-xs font-bold text-orange-400">KNOWLEDGE CHECK</span><h2 class="text-2xl font-bold">📝 ແບບທົດສອບຄວາມຮູ້ AI</h2><p class="text-sm text-slate-400 mt-2">ເລືອກຄຳຕອບທີ່ຖືກຕ້ອງ ແລ້ວກົດສົ່ງຄຳຕອບ.</p></div><div id="quiz-container" class="app-card rounded-3xl p-5 md:p-7 space-y-5"><div id="quiz-questions" class="space-y-5"></div><button onclick="submitQuiz()" class="bg-orange-600 px-6 py-3 rounded-xl font-bold">ກວດຄຳຕອບ</button><div id="quiz-result" class="text-sm font-bold" aria-live="polite"></div></div></section>
+        <section id="sec-quiz" class="tab-content hidden space-y-6"><div><span class="text-xs font-bold text-orange-400">KNOWLEDGE CHECK</span><h2 class="text-2xl font-bold">📝 ແບບທົດສອບຄວາມຮູ້ AI</h2><p class="text-sm text-slate-400 mt-2">ສຸ່ມ 8 ຂໍ້ຈາກ 15 ຂໍ້ ທຸກຄັ້ງທີ່ເລີ່ມໃໝ່. ຫຼັງກວດຄຳຕອບຈະເຫັນຄຳອະທິບາຍ.</p></div><div id="quiz-container" class="app-card rounded-3xl p-5 md:p-7 space-y-5"><div id="quiz-questions" class="space-y-5"></div><div class="flex flex-wrap gap-2"><button id="quiz-submit" onclick="submitQuiz()" class="bg-orange-600 px-6 py-3 rounded-xl font-bold">ກວດຄຳຕອບ</button><button onclick="startQuiz()" class="bg-slate-700 px-6 py-3 rounded-xl font-bold text-sm">ເລີ່ມໃໝ່</button></div><div id="quiz-result" class="text-sm font-bold" aria-live="polite"></div></div></section>
 
-        <!-- MODULE 8: PROGRESS -->
-        <section id="sec-progress" class="tab-content hidden space-y-6"><div><span class="text-xs font-bold text-orange-400">LEARNING ANALYTICS</span><h2 class="text-2xl font-bold">📈 ຄວາມຄືບໜ້າການຮຽນ</h2><p class="text-sm text-slate-400 mt-2">ຂໍ້ມູນຈະບັນທຶກໃນ Browser ຂອງອຸປະກອນນີ້.</p></div><div class="grid grid-cols-2 gap-4"><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ບົດຮຽນທີ່ສຳເລັດ</p><p id="progress-lessons" class="text-3xl font-extrabold text-orange-400 mt-2">0 / 4</p></div><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ຄະແນນທົດສອບຫຼ້າສຸດ</p><p id="progress-score" class="text-3xl font-extrabold text-orange-400 mt-2">-</p></div></div><div class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between text-sm"><span>ຄວາມຄືບໜ້າລວມ</span><span id="progress-percent">0%</span></div><div class="h-3 bg-slate-800 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-orange-500 rounded-full" style="width:0%"></div></div><div class="flex flex-wrap gap-2"><button onclick="exportProgress()" class="bg-slate-700 px-4 py-2 rounded-xl text-sm">ສຳຮອງຂໍ້ມູນ</button><label class="bg-slate-700 px-4 py-2 rounded-xl text-sm cursor-pointer">ນຳເຂົ້າຂໍ້ມູນ<input type="file" accept="application/json" onchange="importProgress(event)" class="hidden"></label><button onclick="resetProgress()" class="bg-red-900/70 px-4 py-2 rounded-xl text-sm">ລ້າງຄວາມຄືບໜ້າ</button></div></div></section>
+        <section id="sec-progress" class="tab-content hidden space-y-6"><div><span class="text-xs font-bold text-orange-400">LEARNING ANALYTICS</span><h2 class="text-2xl font-bold">📈 ຄວາມຄືບໜ້າການຮຽນ</h2><p class="text-sm text-slate-400 mt-2">ຂໍ້ມູນບັນທຶກໃນ Browser ຂອງອຸປະກອນນີ້. ແນະນຳໃຫ້ສຳຮອງຂໍ້ມູນເປັນໄລຍະ.</p></div><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ບົດຮຽນທີ່ສຳເລັດ</p><p id="progress-lessons" class="text-3xl font-extrabold text-orange-400 mt-2">0 / 8</p></div><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ຄະແນນຫຼ້າສຸດ</p><p id="progress-score" class="text-3xl font-extrabold text-orange-400 mt-2">-</p></div><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ຄະແນນສູງສຸດ</p><p id="progress-best" class="text-3xl font-extrabold text-orange-400 mt-2">-</p></div><div class="app-card rounded-2xl p-5"><p class="text-xs text-slate-400">ຈຳນວນຄັ້ງທີ່ທົດສອບ</p><p id="progress-attempts" class="text-3xl font-extrabold text-orange-400 mt-2">0</p></div></div><div class="app-card rounded-2xl p-5 space-y-3"><div class="flex justify-between text-sm"><span>ຄວາມຄືບໜ້າລວມ</span><span id="progress-percent">0%</span></div><div class="h-3 bg-slate-800 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-orange-500 rounded-full transition-all duration-500" style="width:0%"></div></div><ul id="progress-list" class="text-sm text-slate-300 space-y-1.5 pt-2"></ul><div class="flex flex-wrap gap-2 pt-2"><button onclick="exportProgress()" class="bg-slate-700 px-4 py-2 rounded-xl text-sm">ສຳຮອງຂໍ້ມູນ</button><label class="bg-slate-700 px-4 py-2 rounded-xl text-sm cursor-pointer">ນຳເຂົ້າຂໍ້ມູນ<input type="file" accept="application/json" onchange="importProgress(event)" class="hidden"></label><button onclick="resetProgress()" class="bg-red-900/70 px-4 py-2 rounded-xl text-sm">ລ້າງຄວາມຄືບໜ້າ</button></div></div></section>
 
     </main>
 
     <!-- Mobile Bottom Navigation Bar -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-50 px-1 py-2 flex justify-start overflow-x-auto gap-1 text-[10px]">
-        <button onclick="switchTab('prompt-eng')" id="mob-tab-prompt-eng" class="flex-shrink-0 px-3 py-1 text-orange-400 font-bold">💡<br>Prompt</button>
+        <button onclick="switchTab('dashboard')" id="mob-tab-dashboard" class="flex-shrink-0 px-3 py-1 text-orange-400 font-bold">🏠<br>ໜ້າຫຼັກ</button>
+        <button onclick="switchTab('prompt-eng')" id="mob-tab-prompt-eng" class="flex-shrink-0 px-3 py-1 text-slate-400">💡<br>Prompt</button>
         <button onclick="switchTab('strategy')" id="mob-tab-strategy" class="flex-shrink-0 px-3 py-1 text-slate-400">⚡<br>Strategy</button>
         <button onclick="switchTab('builder')" id="mob-tab-builder" class="flex-shrink-0 px-3 py-1 text-slate-400">✍️<br>Builder</button>
         <button onclick="switchTab('tools')" id="mob-tab-tools" class="flex-shrink-0 px-3 py-1 text-slate-400">🔗<br>AI Apps</button>
@@ -703,7 +729,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <script>
         // Tab Navigation Switcher Fix
         function switchTab(tabId) {
-            const tabs = ['prompt-eng', 'strategy', 'builder', 'tools', 'academy', 'tutor', 'quiz', 'progress'];
+            const tabs = ['dashboard', 'prompt-eng', 'strategy', 'builder', 'tools', 'academy', 'tutor', 'quiz', 'progress'];
             tabs.forEach(id => {
                 const sec = document.getElementById(`sec-${id}`);
                 const btn = document.getElementById(`tab-btn-${id}`);
@@ -731,11 +757,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                     }
                 }
             });
+            const w = document.getElementById('welcome-card'); if (w) w.classList.toggle('hidden', tabId !== 'dashboard');
+            if (tabId === 'dashboard') renderProgress();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // Apply Expanded Prompt Builder Presets
-        function applyPreset(type) {
+        function applyPreset(type, silent) {
             const role = document.getElementById('builder-role');
             const task = document.getElementById('builder-task');
             const context = document.getElementById('builder-context');
@@ -794,7 +822,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                 cot.checked = true;
             }
             updatePromptOutput();
-            showToast('ນຳໃຊ້ Preset ສໍາເລັດ!');
+            if (!silent) showToast('ນຳໃຊ້ Preset ສໍາເລັດ!');
         }
 
         // Live Dynamic Prompt Generator
@@ -839,7 +867,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
             document.getElementById('img-aspect').value = '';
             document.getElementById('builder-cot').checked = false;
             updatePromptOutput();
-            showToast('ລ້າງຂໍ້ມູນเรียບຮ້ອຍ!');
+            showToast('ລ້າງຂໍ້ມູນຮຽບຮ້ອຍ!');
         }
 
         // Listen for user inputs in Prompt Builder
@@ -894,35 +922,236 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         }
 
 
-        // Bounma 3.0: local learning progress
-        const progressKey = 'bounmaAI_v3_progress';
-        function getProgress() { try { return JSON.parse(localStorage.getItem(progressKey)) || { lessons: [], score: null }; } catch(e) { return { lessons: [], score: null }; } }
-        function saveProgress(data) { localStorage.setItem(progressKey, JSON.stringify(data)); renderProgress(); }
-        function completeLesson(id) { const data=getProgress(); if(!data.lessons.includes(id)) data.lessons.push(id); saveProgress(data); showToast('ບັນທຶກບົດຮຽນແລ້ວ'); }
-        function renderProgress() { const d=getProgress(), n=d.lessons.length, pct=Math.round(n/4*100); const a=document.getElementById('progress-lessons'); if(a)a.textContent=`${n} / 4`; const b=document.getElementById('progress-score'); if(b)b.textContent=d.score===null?'-':`${d.score}%`; const c=document.getElementById('progress-percent'); if(c)c.textContent=pct+'%'; const bar=document.getElementById('progress-bar'); if(bar)bar.style.width=pct+'%'; }
-        const tutorKB = [
-          {keys:['prompt','ພຣອມ','ຄຳສັ່ງ'],answer:'Prompt ແມ່ນຂໍ້ຄວາມ ຫຼືຄຳສັ່ງທີ່ຜູ້ໃຊ້ປ້ອນໃຫ້ AI ເພື່ອກຳນົດວ່າຕ້ອງການໃຫ້ AI ເຮັດຫຍັງ. Prompt ທີ່ດີຄວນລະບຸໜ້າວຽກ, ຂໍ້ມູນປະກອບ ແລະຮູບແບບຄຳຕອບ.'},
-          {keys:['rtcf'],answer:'RTCF ປະກອບມີ 4 ສ່ວນ: Role (ບົດບາດ), Task (ວຽກທີ່ຕ້ອງເຮັດ), Context (ບໍລິບົດ/ເງື່ອນໄຂ) ແລະ Format (ຮູບແບບຄຳຕອບ). ຕົວຢ່າງ: ເຈົ້າເປັນຄູສອນ, ອະທິບາຍວິທີໃຊ້ AI, ສຳລັບຜູ້ເລີ່ມ, ຂຽນເປັນ 5 ຂໍ້.'},
-          {keys:['machine learning','ຮຽນຮູ້ຂອງເຄື່ອງ'],answer:'Machine Learning ແມ່ນສາຂາໜຶ່ງຂອງ AI ທີ່ໃຫ້ຄອມພິວເຕີຮຽນຮູ້ຮູບແບບຈາກຂໍ້ມູນ ເພື່ອຄາດຄະເນ ຫຼືຈັດປະເພດ ໂດຍບໍ່ຕ້ອງຂຽນກົດທຸກກໍລະນີແບບຕາຍຕົວ.'},
-          {keys:['hallucination','ຂໍ້ມູນຜິດ','ຜິດພາດ'],answer:'AI hallucination ແມ່ນກໍລະນີທີ່ AI ສ້າງຄຳຕອບທີ່ຟັງເບິ່ງໜ້າເຊື່ອຖື ແຕ່ບໍ່ຖືກຕ້ອງ ຫຼືບໍ່ມີຫຼັກຖານ. ຄວນກວດກັບແຫຼ່ງຂໍ້ມູນຈິງ ໂດຍສະເພາະຕົວເລກ, ກົດໝາຍ ແລະຂໍ້ມູນວິສະວະກຳ.'},
-          {keys:['ປອດໄພ','privacy','ຂໍ້ມູນລັບ'],answer:'ຫຼັກຄວາມປອດໄພ: ຢ່າປ້ອນລະຫັດຜ່ານ, ຂໍ້ມູນສ່ວນບຸກຄົນ ຫຼືເອກະສານລັບຂອງອົງກອນໃນ AI ສາທາລະນະ. ກວດນະໂຍບາຍຂໍ້ມູນຂອງແພລດຟອມກ່ອນນຳໃຊ້.'},
-          {keys:['chatgpt','gemini','notebooklm'],answer:'ເລືອກເຄື່ອງມືຕາມວຽກ: ChatGPT ຫຼື Gemini ເໝາະກັບການຮ່າງ, ວິເຄາະ ແລະລະດົມຄວາມຄິດ; NotebookLM ເໝາະກັບການຖາມ-ຕອບຈາກເອກະສານທີ່ຜູ້ໃຊ້ນຳເຂົ້າ. ຄວນກວດຄວາມສາມາດ ແລະນະໂຍບາຍລ່າສຸດຂອງແຕ່ລະບໍລິການ.'}
-        ];
-        function askTutor(q) { q=(q||'').trim(); if(!q)return; const chat=document.getElementById('tutor-chat'); const u=document.createElement('div');u.className='ml-auto bg-orange-600/20 border border-orange-500/30 rounded-2xl p-3 text-sm max-w-3xl';u.textContent=q;chat.appendChild(u); const lower=q.toLowerCase(); const hit=tutorKB.find(x=>x.keys.some(k=>lower.includes(k))); const a=document.createElement('div');a.className='bg-slate-900 rounded-2xl p-4 text-sm max-w-3xl';a.textContent=hit?hit.answer:'ຂໍອະໄພ, ຖານຄວາມຮູ້ Offline ຂອງຂ້ອຍຍັງບໍ່ມີຄຳຕອບສຳລັບຫົວຂໍ້ນີ້. ລອງຖາມເລື່ອງ Prompt, RTCF, Machine Learning, AI hallucination ຫຼືຄວາມປອດໄພຂອງ AI.';chat.appendChild(a);chat.scrollTop=chat.scrollHeight; }
-        const quizData=[{q:'Prompt ແມ່ນຫຍັງ?',o:['ຂໍ້ຄວາມຄຳສັ່ງໃຫ້ AI','ຊື່ຄອມພິວເຕີ','ລະຫັດຜ່ານ'],a:0},{q:'ຕົວ R ໃນ RTCF ໝາຍເຖິງຫຍັງ?',o:['Result','Role','Report'],a:1},{q:'Context ໃນ Prompt ແມ່ນຫຍັງ?',o:['ສີຂອງໜ້າຈໍ','ບໍລິບົດ ແລະເງື່ອນໄຂ','ຊື່ AI'],a:1},{q:'ເມື່ອ AI ໃຫ້ຕົວເລກທາງວິສະວະກຳ ຄວນເຮັດແນວໃດ?',o:['ເຊື່ອທັນທີ','ສົ່ງຕໍ່ທັນທີ','ກວດສອບກັບແຫຼ່ງຂໍ້ມູນ'],a:2},{q:'AI Tutor ໃນເວີຊັນນີ້ເຮັດວຽກແນວໃດ?',o:['ຄົ້ນຫາທຸກເວັບໄຊ','ຈັບຄູ່ຄຳຖາມກັບຖານຄວາມຮູ້ພາຍໃນ','ໃຊ້ LLM ຜ່ານ API'],a:1}];
-        function renderQuiz(){const root=document.getElementById('quiz-questions');if(!root)return;root.innerHTML=quizData.map((q,i)=>`<fieldset class="border-b border-slate-700 pb-4"><legend class="font-bold mb-3">${i+1}. ${q.q}</legend>${q.o.map((o,j)=>`<label class="flex gap-2 items-center text-sm py-1 text-slate-300"><input type="radio" name="quiz-${i}" value="${j}" class="accent-orange-500"> ${o}</label>`).join('')}</fieldset>`).join('');}
-        function submitQuiz(){let score=0,answered=0;quizData.forEach((q,i)=>{const v=document.querySelector(`input[name="quiz-${i}"]:checked`);if(v){answered++;if(Number(v.value)===q.a)score++;}});if(answered<quizData.length){showToast('ກະລຸນາຕອບໃຫ້ຄົບທຸກຂໍ້');return;}const pct=Math.round(score/quizData.length*100);const d=getProgress();d.score=pct;saveProgress(d);document.getElementById('quiz-result').textContent=`ຜົນຄະແນນ: ${score}/${quizData.length} (${pct}%). ${pct>=80?'ດີຫຼາຍ!':'ຄວນທົບທວນບົດຮຽນ ແລ້ວລອງໃໝ່.'}`;}
-        function exportProgress(){const blob=new Blob([JSON.stringify(getProgress(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='bounma-progress-backup.json';a.click();URL.revokeObjectURL(a.href);}
-        function importProgress(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.lessons))throw Error();saveProgress({lessons:d.lessons.filter(x=>[1,2,3,4].includes(x)),score:Number.isFinite(d.score)?d.score:null});showToast('ນຳເຂົ້າຂໍ້ມູນສຳເລັດ');}catch(err){showToast('ໄຟລ໌ສຳຮອງບໍ່ຖືກຕ້ອງ');}};r.readAsText(f);}
-        function resetProgress(){if(!confirm('ຢືນຢັນລ້າງຄວາມຄືບໜ້າທັງໝົດ?'))return;localStorage.removeItem(progressKey);renderProgress();showToast('ລ້າງຂໍ້ມູນແລ້ວ');}
+        // ===== Bounma 3.1: learning system =====
+const progressKey = 'bounmaAI_v3_progress';
+const defaultProgress = () => ({ lessons: [], score: null, best: null, attempts: 0 });
+function getProgress() {
+  try { return Object.assign(defaultProgress(), JSON.parse(localStorage.getItem(progressKey)) || {}); }
+  catch (e) { return defaultProgress(); }
+}
+function saveProgress(d) {
+  try { localStorage.setItem(progressKey, JSON.stringify(d)); }
+  catch (e) { showToast('ບໍ່ສາມາດບັນທຶກໄດ້ (Browser ປິດການເກັບຂໍ້ມູນ)'); }
+  renderProgress();
+}
+
+// ----- Lessons -----
+const LESSONS = [
+  { id: 1, lv: 'BEGINNER', min: 15, t: 'AI ແມ່ນຫຍັງ?', s: 'ເຂົ້າໃຈ AI, Machine Learning ແລະ Generative AI.',
+    pts: ['AI ແມ່ນລະບົບຄອມພິວເຕີທີ່ເຮັດວຽກຄ້າຍການຄິດຂອງມະນຸດ ເຊັ່ນ ເຂົ້າໃຈພາສາ, ຈຳແນກຮູບ ແລະຄາດຄະເນ.', 'Machine Learning ແມ່ນການໃຫ້ເຄື່ອງຮຽນຮູ້ຮູບແບບຈາກຂໍ້ມູນ.', 'Generative AI ສ້າງເນື້ອຫາໃໝ່ ເຊັ່ນ ຂໍ້ຄວາມ, ຮູບ ແລະໂຄ້ດ.', 'AI ເປັນຜູ້ຊ່ວຍ ບໍ່ແມ່ນຜູ້ຕັດສິນໃຈແທນເຮົາ.'],
+    ex: 'ໃຫ້ AI ຊ່ວຍສະຫຼຸບລາຍງານ ຫຼືຮ່າງອີເມວ ແຕ່ຜູ້ໃຊ້ຕ້ອງກວດຄວາມຖືກຕ້ອງກ່ອນນຳໃຊ້.',
+    task: 'ຂຽນ 3 ວຽກໃນຊີວິດປະຈຳວັນຂອງທ່ານທີ່ AI ອາດຊ່ວຍໄດ້.' },
+  { id: 2, lv: 'BEGINNER', min: 20, t: 'ການຂຽນ Prompt ທີ່ດີ', s: 'ຝຶກ Role, Task, Context ແລະ Format (RTCF).',
+    pts: ['Role: ບອກວ່າໃຫ້ AI ເປັນໃຜ ເຊັ່ນ ວິສະວະກອນປະປາ.', 'Task: ບອກວຽກທີ່ຕ້ອງເຮັດໃຫ້ຊັດເຈນ.', 'Context: ໃຫ້ຂໍ້ມູນພື້ນຖານ ເງື່ອນໄຂ ແລະຜູ້ອ່ານ.', 'Format: ກຳນົດຮູບແບບຄຳຕອບ ເຊັ່ນ ຕາຕະລາງ ຫຼື 5 ຂໍ້.'],
+    ex: '“ເຈົ້າເປັນວິສະວະກອນປະປາ. ຊ່ວຍອະທິບາຍວິທີກວດປັ໊ມນ້ຳ ສຳລັບຜູ້ເລີ່ມຕົ້ນ ເປັນ 5 ຂັ້ນຕອນ.”',
+    task: 'ຂຽນ Prompt RTCF ໜຶ່ງອັນ ແລ້ວທົດລອງໃນແຖບ ເຄື່ອງມືສ້າງ Prompt.' },
+  { id: 3, lv: 'BEGINNER', min: 20, t: 'ເລືອກໃຊ້ AI ໃຫ້ເໝາະກັບວຽກ', s: 'ChatGPT, Gemini ແລະ NotebookLM ຕ່າງກັນແນວໃດ.',
+    pts: ['ChatGPT / Gemini: ຮ່າງ, ລະດົມຄວາມຄິດ, ອະທິບາຍ, ຂຽນໂຄ້ດ.', 'NotebookLM: ຖາມ-ຕອບຈາກເອກະສານທີ່ເຮົານຳເຂົ້າເອງ.', 'ເລືອກຕາມວຽກ ບໍ່ຕ້ອງໃຊ້ຕົວດຽວທຸກຢ່າງ.', 'ແຜນຟຣີ ແລະຄວາມສາມາດປ່ຽນໄດ້ ຄວນກວດໜ້າເວັບທາງການ.'],
+    ex: 'ໃຊ້ NotebookLM ສະຫຼຸບເອກະສານອ້າງອີງ; ໃຊ້ ChatGPT ຊ່ວຍຮ່າງແຜນງານ.',
+    task: 'ເລືອກ 1 ວຽກຈິງ ແລ້ວຕັດສິນໃຈວ່າຈະໃຊ້ AI ຕົວໃດ ເພາະຫຍັງ.' },
+  { id: 4, lv: 'PRACTICE', min: 25, t: 'ກວດສອບຄຳຕອບຈາກ AI', s: 'Hallucination, ຄວາມປອດໄພຂອງຂໍ້ມູນ ແລະການກວດທານ.',
+    pts: ['AI ອາດຕອບຜິດແຕ່ຟັງໜ້າເຊື່ອ (hallucination).', 'ກວດຕົວເລກ, ສູດ ແລະແຫຼ່ງອ້າງອີງກັບເອກະສານຈິງ.', 'ຢ່າປ້ອນລະຫັດຜ່ານ ຫຼືຂໍ້ມູນລັບຂອງອົງກອນ.', 'ໃຫ້ AI ບອກຂໍ້ສົມມຸດ ແລະລະດັບຄວາມໝັ້ນໃຈ.'],
+    ex: 'AI ຄຳນວນຂະໜາດທໍ່ ➜ ຄຳນວນຊ້ຳດ້ວຍສູດມາດຕະຖານ ກ່ອນນຳໄປໃຊ້ຈິງ.',
+    task: 'ຖາມ AI ໜຶ່ງຄຳຖາມທີ່ມີຕົວເລກ ແລ້ວກວດຫາຄວາມຜິດພາດ.' },
+  { id: 5, lv: 'INTERMEDIATE', min: 20, t: 'ໃຫ້ຕົວຢ່າງ (Few-shot) ແລະປັບປຸງ Prompt', s: 'ເຮັດໃຫ້ຄຳຕອບຕົງຕາມຮູບແບບທີ່ຕ້ອງການ.',
+    pts: ['Few-shot: ໃສ່ຕົວຢ່າງ 1-3 ອັນ ໃຫ້ AI ເຮັດຕາມ.', 'ຖ້າຄຳຕອບບໍ່ດີ ໃຫ້ແກ້ Prompt ແທນການຖາມຊ້ຳ.', 'ແຍກວຽກໃຫຍ່ເປັນຫຼາຍຂັ້ນ ແລ້ວຖາມທີລະຂັ້ນ.', 'Chain of Thought: ຂໍໃຫ້ຄິດເທື່ອລະຂັ້ນຕອນ.'],
+    ex: 'ຕົວຢ່າງ: “ບັນຫາ: ນ້ຳອ່ອນ ➜ ສາເຫດ: ທໍ່ຮົ່ວ. ບັນຫາ: ມິເຕີຊ້າ ➜ ສາເຫດ: ... ” ແລ້ວໃຫ້ AI ຕື່ມຕໍ່.',
+    task: 'ປັບ Prompt ເກົ່າຂອງທ່ານໂດຍເພີ່ມຕົວຢ່າງ 1 ອັນ ແລ້ວປຽບທຽບຜົນ.' },
+  { id: 6, lv: 'INTERMEDIATE', min: 20, t: 'ໃຊ້ AI ໃນວຽກວິສະວະກຳ ແລະບໍລິຫານ', s: 'ຮ່າງລາຍງານ, ອີເມວ, ແຜນງານ ແລະສະຫຼຸບການປະຊຸມ.',
+    pts: ['ໃຫ້ AI ຮ່າງ ແລ້ວຄົນເປັນຜູ້ແກ້ ແລະຮັບຜິດຊອບ.', 'ບອກຜູ້ອ່ານ ແລະຈຸດປະສົງ ເຊັ່ນ ລາຍງານສຳລັບຜູ້ອຳນວຍການ.', 'ໃຊ້ຕາຕະລາງ Action Items: ວຽກ, ຜູ້ຮັບຜິດຊອບ, ກຳນົດເວລາ.', 'ປິດຊື່ ແລະຂໍ້ມູນລັບກ່ອນສົ່ງໃຫ້ AI ສາທາລະນະ.'],
+    ex: '“ສະຫຼຸບບັນທຶກການປະຊຸມນີ້ເປັນຕາຕະລາງ Action Items ພ້ອມຜູ້ຮັບຜິດຊອບ ແລະກຳນົດເວລາ.”',
+    task: 'ເອົາບັນທຶກການປະຊຸມ (ທີ່ບໍ່ມີຂໍ້ມູນລັບ) ມາໃຫ້ AI ສະຫຼຸບເປັນ Action Items.' },
+  { id: 7, lv: 'INTERMEDIATE', min: 20, t: 'ສະຫຼຸບ ແລະຄົ້ນຄວ້າຈາກເອກະສານ', s: 'ຖາມ-ຕອບຈາກ PDF ແລະບົດລາຍງານຢ່າງມີແຫຼ່ງອ້າງອີງ.',
+    pts: ['ນຳເຂົ້າເອກະສານຕົ້ນສະບັບ ແລ້ວຖາມໂດຍອີງເອກະສານນັ້ນ.', 'ຂໍໃຫ້ AI ບອກໜ້າ/ຫົວຂໍ້ທີ່ອ້າງອີງ.', 'ກວດ 2-3 ຈຸດສຳຄັນກັບເອກະສານຈິງສະເໝີ.', 'ແຍກ “ຂໍ້ເທັດຈິງ” ກັບ “ຄວາມເຫັນຂອງ AI”.'],
+    ex: '“ຈາກເອກະສານທີ່ໃຫ້ ສະຫຼຸບ 5 ຈຸດສຳຄັນ ແລະບອກວ່າແຕ່ລະຈຸດຢູ່ຫົວຂໍ້ໃດ.”',
+    task: 'ລອງຖາມຈາກເອກະສານ PDF ໜຶ່ງໄຟລ໌ ແລະກວດແຫຼ່ງອ້າງອີງ 2 ຈຸດ.' },
+  { id: 8, lv: 'PRACTICE', min: 30, t: 'ໂຄງການປະຕິບັດ: ສ້າງ SOP ດ້ວຍ AI', s: 'ລວມທຸກທັກສະສ້າງເອກະສານທີ່ໃຊ້ງານໄດ້ຈິງ.',
+    pts: ['ກຳນົດຂະບວນການ: ເລີ່ມຕົ້ນ, ຜູ້ຮັບຜິດຊອບ, ຜົນທີ່ຕ້ອງການ.', 'ໃຊ້ RTCF + ຂໍໃຫ້ຄິດເທື່ອລະຂັ້ນ ເພື່ອຮ່າງ SOP.', 'ຜູ້ຊ່ຽວຊານກວດ ແລະແກ້ຂັ້ນຕອນຄວາມປອດໄພ.', 'ທົດລອງໃຊ້ຈິງ ແລ້ວປັບປຸງເວີຊັນ.'],
+    ex: '“ເຈົ້າເປັນຜູ້ຊ່ຽວຊານ SOP. ຮ່າງ SOP ຂັ້ນຕອນກວດປັ໊ມປະຈຳອາທິດ ເປັນຕາຕະລາງ ຂັ້ນຕອນ/ຜູ້ຮັບຜິດຊອບ/ຄວາມປອດໄພ.”',
+    task: 'ຮ່າງ SOP 1 ເລື່ອງຈາກວຽກຂອງທ່ານ ແລ້ວໃຫ້ເພື່ອນຮ່ວມງານກວດ.' }
+];
+let lessonFilter = 'ALL';
+function lessonDone(id) { return getProgress().lessons.includes(id); }
+function toggleLesson(id) {
+  const d = getProgress(), i = d.lessons.indexOf(id);
+  if (i >= 0) d.lessons.splice(i, 1); else d.lessons.push(id);
+  saveProgress(d); showToast(i >= 0 ? 'ຍົກເລີກການໝາຍແລ້ວ' : 'ບັນທຶກບົດຮຽນແລ້ວ ✔');
+}
+function completeLesson(id) { if (!lessonDone(id)) toggleLesson(id); }
+function setLessonFilter(f) { lessonFilter = f; renderLessons(); }
+function renderLessons() {
+  const done = getProgress().lessons;
+  const levels = ['ALL', 'BEGINNER', 'INTERMEDIATE', 'PRACTICE'];
+  const fl = document.getElementById('lesson-filter');
+  if (fl) fl.innerHTML = levels.map(l => `<button onclick="setLessonFilter('${l}')" class="chip ${l === lessonFilter ? 'chip-on' : ''}">${l === 'ALL' ? 'ທັງໝົດ' : l}</button>`).join('');
+  const list = document.getElementById('lesson-list'); if (!list) return;
+  const openIds = [...list.querySelectorAll('details[open]')].map(x => x.id);
+  list.innerHTML = LESSONS.filter(l => lessonFilter === 'ALL' || l.lv === lessonFilter).map(l => {
+    const ok = done.includes(l.id);
+    return `<article class="app-card rounded-2xl p-5 space-y-3 ${ok ? 'border-emerald-500/40' : ''}">
+      <div class="flex justify-between"><span class="text-orange-400 text-xs font-bold">LESSON ${String(l.id).padStart(2, '0')} • ${l.lv}</span><span class="text-xs text-slate-400">${l.min} ນາທີ ${ok ? '• ✅' : ''}</span></div>
+      <h3 class="font-bold text-lg">${l.t}</h3><p class="text-sm text-slate-300">${l.s}</p>
+      <details id="lesson-${l.id}" ${openIds.includes('lesson-' + l.id) ? 'open' : ''} class="space-y-3"><summary class="text-sm font-bold text-orange-300">📖 ເປີດອ່ານບົດຮຽນ</summary>
+        <ul class="list-disc pl-5 text-sm text-slate-300 space-y-1.5 mt-3">${l.pts.map(p => `<li>${p}</li>`).join('')}</ul>
+        <div class="bg-slate-950 rounded-xl p-3 text-sm"><b class="text-orange-300">ຕົວຢ່າງ:</b> ${l.ex}</div>
+        <div class="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 text-sm"><b class="text-orange-300">ແບບຝຶກຫັດ:</b> ${l.task}</div>
+      </details>
+      <button onclick="toggleLesson(${l.id})" class="px-4 py-2 rounded-xl text-sm font-bold ${ok ? 'bg-slate-700' : 'bg-orange-600'}">${ok ? 'ຍົກເລີກການໝາຍ' : 'ໝາຍວ່າຮຽນແລ້ວ'}</button>
+    </article>`;
+  }).join('');
+}
+function openLesson(id) {
+  lessonFilter = 'ALL'; switchTab('academy'); renderLessons();
+  const el = document.getElementById('lesson-' + id);
+  if (el) { el.open = true; setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150); }
+}
+
+// ----- Progress + Dashboard -----
+const TIPS = [
+  'ຂຽນ Prompt ໃຫ້ຄົບ RTCF: ບົດບາດ, ວຽກ, ບໍລິບົດ, ຮູບແບບ.',
+  'ຖ້າຄຳຕອບບໍ່ຕົງໃຈ ໃຫ້ເພີ່ມບໍລິບົດ ຫຼືຕົວຢ່າງ ແທນການຖາມຊ້ຳ.',
+  'ກວດຕົວເລກ ແລະສູດຄຳນວນທຸກຄັ້ງ ກ່ອນນຳໄປໃຊ້ໃນວຽກວິສະວະກຳ.',
+  'ຢ່າສົ່ງຂໍ້ມູນລັບຂອງອົງກອນເຂົ້າ AI ສາທາລະນະ.',
+  'ແຍກວຽກໃຫຍ່ເປັນຂັ້ນຍ່ອຍ ແລ້ວຖາມທີລະຂັ້ນ.',
+  'ຂໍໃຫ້ AI ບອກຂໍ້ສົມມຸດທີ່ໃຊ້ ເພື່ອກວດສອບໄດ້ງ່າຍຂຶ້ນ.',
+  'ສຳຮອງຄວາມຄືບໜ້າໃນແຖບ ຄວາມຄືບໜ້າ ເປັນໄລຍະ.'
+];
+function setText(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+function renderProgress() {
+  const d = getProgress(), total = LESSONS.length, n = d.lessons.length, pct = Math.round(n / total * 100);
+  const sc = d.score === null ? '-' : d.score + '%', bs = d.best === null ? '-' : d.best + '%';
+  ['progress', 'dash'].forEach(p => { setText(p + '-lessons', `${n} / ${total}`); setText(p + '-score', sc); setText(p + '-percent', pct + '%'); });
+  setText('dash-best', bs); setText('progress-best', bs); setText('progress-attempts', String(d.attempts));
+  ['progress-bar', 'dash-bar'].forEach(id => { const b = document.getElementById(id); if (b) b.style.width = pct + '%'; });
+  const pl = document.getElementById('progress-list');
+  if (pl) pl.innerHTML = LESSONS.map(l => `<li>${d.lessons.includes(l.id) ? '✅' : '⬜'} ບົດທີ ${l.id}: ${l.t}</li>`).join('');
+  const next = LESSONS.find(l => !d.lessons.includes(l.id)), btn = document.getElementById('dash-next-btn');
+  if (btn) {
+    if (next) { setText('dash-next-title', `ບົດທີ ${next.id}: ${next.t}`); setText('dash-msg', n === 0 ? 'ເລີ່ມຕົ້ນດ້ວຍບົດທຳອິດ ໃຊ້ເວລາປະມານ ' + next.min + ' ນາທີ.' : `ສຳເລັດແລ້ວ ${n} ບົດ. ຮຽນຕໍ່ອີກ ${total - n} ບົດ.`); btn.textContent = n === 0 ? 'ເລີ່ມຮຽນ' : 'ຮຽນບົດຕໍ່ໄປ'; btn.onclick = () => openLesson(next.id); }
+    else { setText('dash-next-title', '🎉 ຮຽນຄົບທຸກບົດແລ້ວ'); setText('dash-msg', d.score === null ? 'ລອງເຮັດແບບທົດສອບເພື່ອວັດຜົນ.' : 'ທົບທວນ ຫຼືເຮັດແບບທົດສອບອີກຄັ້ງເພື່ອເພີ່ມຄະແນນ.'); btn.textContent = 'ໄປທົດສອບ'; btn.onclick = () => switchTab('quiz'); }
+  }
+  setText('dash-tip', TIPS[new Date().getDate() % TIPS.length]);
+  renderLessons();
+}
+
+// ----- Offline Tutor (keyword scoring) -----
+const tutorKB = [
+  { t: 'Prompt ແມ່ນຫຍັງ?', keys: ['prompt', 'ພຣອມ', 'ຄຳສັ່ງ'], a: 'Prompt ແມ່ນຂໍ້ຄວາມ ຫຼືຄຳສັ່ງທີ່ເຮົາປ້ອນໃຫ້ AI. Prompt ທີ່ດີຄວນບອກວຽກ, ຂໍ້ມູນປະກອບ ແລະຮູບແບບຄຳຕອບ.' },
+  { t: 'RTCF ແມ່ນຫຍັງ?', keys: ['rtcf', 'role', 'ບົດບາດ'], a: 'RTCF = Role (ບົດບາດ), Task (ວຽກ), Context (ບໍລິບົດ), Format (ຮູບແບບ). ຕົວຢ່າງ: ເຈົ້າເປັນຄູ, ອະທິບາຍ AI, ສຳລັບຜູ້ເລີ່ມ, ຂຽນ 5 ຂໍ້.' },
+  { t: 'AI ແມ່ນຫຍັງ?', keys: ['ai ແມ່ນ', 'ປັນຍາປະດິດ', 'artificial', 'ອັດສະລິຍະ'], a: 'AI (Artificial Intelligence) ແມ່ນລະບົບຄອມພິວເຕີທີ່ເຮັດວຽກຄ້າຍການຄິດຂອງມະນຸດ ເຊັ່ນ ເຂົ້າໃຈພາສາ, ຈຳແນກຮູບ ແລະຄາດຄະເນ.' },
+  { t: 'Machine Learning', keys: ['machine learning', 'ml', 'ຮຽນຮູ້ຂອງເຄື່ອງ'], a: 'Machine Learning ແມ່ນສາຂາໜຶ່ງຂອງ AI ທີ່ໃຫ້ຄອມພິວເຕີຮຽນຮູ້ຮູບແບບຈາກຂໍ້ມູນ ເພື່ອຄາດຄະເນ ຫຼືຈັດປະເພດ ໂດຍບໍ່ຕ້ອງຂຽນກົດທຸກກໍລະນີ.' },
+  { t: 'Generative AI', keys: ['generative', 'ເຈນເນີເຣທີບ', 'ສ້າງເນື້ອຫາ'], a: 'Generative AI ແມ່ນ AI ທີ່ສ້າງເນື້ອຫາໃໝ່ ເຊັ່ນ ຂໍ້ຄວາມ, ຮູບ, ສຽງ ແລະໂຄ້ດ ຈາກຄຳສັ່ງຂອງຜູ້ໃຊ້.' },
+  { t: 'LLM ແມ່ນຫຍັງ?', keys: ['llm', 'large language', 'ໂມເດວພາສາ'], a: 'LLM (Large Language Model) ແມ່ນໂມເດວພາສາຂະໜາດໃຫຍ່ ຝຶກຈາກຂໍ້ຄວາມຈຳນວນຫຼາຍ ເພື່ອຄາດເດົາຄຳຕໍ່ໄປ ຈຶ່ງຂຽນ ແລະຕອບຄຳຖາມໄດ້.' },
+  { t: 'AI Hallucination', keys: ['hallucination', 'ຂໍ້ມູນຜິດ', 'ຕອບຜິດ', 'ແຕ່ງເລື່ອງ'], a: 'Hallucination ແມ່ນເວລາ AI ຕອບຟັງໜ້າເຊື່ອ ແຕ່ບໍ່ຖືກ ຫຼືບໍ່ມີຫຼັກຖານ. ຄວນກວດກັບແຫຼ່ງຈິງ ໂດຍສະເພາະຕົວເລກ, ກົດໝາຍ ແລະຂໍ້ມູນວິສະວະກຳ.' },
+  { t: 'ຄວາມປອດໄພຂອງຂໍ້ມູນ', keys: ['ປອດໄພ', 'privacy', 'ຂໍ້ມູນລັບ', 'ລະຫັດຜ່ານ', 'password'], a: 'ຢ່າປ້ອນລະຫັດຜ່ານ, ຂໍ້ມູນສ່ວນຕົວ ຫຼືເອກະສານລັບຂອງອົງກອນໃນ AI ສາທາລະນະ. ກວດນະໂຍບາຍຂໍ້ມູນຂອງບໍລິການກ່ອນໃຊ້ ແລະປິດຊື່ກ່ອນສົ່ງ.' },
+  { t: 'ChatGPT / Gemini / NotebookLM', keys: ['chatgpt', 'gemini', 'notebooklm', 'ເລືອກເຄື່ອງມື'], a: 'ChatGPT ແລະ Gemini ເໝາະກັບການຮ່າງ, ອະທິບາຍ ແລະລະດົມຄວາມຄິດ; NotebookLM ເໝາະກັບຖາມ-ຕອບຈາກເອກະສານທີ່ນຳເຂົ້າ. ຄວາມສາມາດ ແລະແຜນຟຣີປ່ຽນໄດ້ ຄວນກວດໜ້າເວັບທາງການ.' },
+  { t: 'ຂໍ້ຈຳກັດຂອງ AI', keys: ['ຂໍ້ຈຳກັດ', 'ຈຳກັດ', 'limit', 'ຂໍ້ເສຍ'], a: 'ຂໍ້ຈຳກັດ: ອາດຕອບຜິດ, ຂໍ້ມູນອາດບໍ່ທັນສະໄໝ, ບໍ່ຮູ້ບໍລິບົດສະເພາະຂອງເຮົາ ແລະອາດມີອະຄະຕິ. ຈຶ່ງຕ້ອງມີຄົນກວດກ່ອນນຳໃຊ້.' },
+  { t: 'Chain of Thought', keys: ['chain of thought', 'cot', 'ເທື່ອລະຂັ້ນ', 'step by step'], a: 'Chain of Thought ແມ່ນການຂໍໃຫ້ AI ຄິດເທື່ອລະຂັ້ນຕອນ (Let\'s think step by step) ກ່ອນຕອບ ຊ່ວຍວຽກວິເຄາະ ແລະຄຳນວນໃຫ້ຖືກຕ້ອງຂຶ້ນ.' },
+  { t: 'Few-shot (ໃຫ້ຕົວຢ່າງ)', keys: ['few-shot', 'few shot', 'ຕົວຢ່າງ', 'example'], a: 'Few-shot ແມ່ນການໃສ່ຕົວຢ່າງ 1-3 ອັນໃນ Prompt ໃຫ້ AI ເຮັດຕາມຮູບແບບ ຊ່ວຍໃຫ້ຜົນລັບຕົງຕາມຕ້ອງການຫຼາຍຂຶ້ນ.' },
+  { t: 'ປັບປຸງ Prompt ໃຫ້ດີຂຶ້ນ', keys: ['ປັບປຸງ', 'ດີຂຶ້ນ', 'ບໍ່ຕົງ', 'improve'], a: 'ຖ້າຄຳຕອບບໍ່ຕົງ: 1) ເພີ່ມບໍລິບົດ, 2) ກຳນົດຮູບແບບ, 3) ໃສ່ຕົວຢ່າງ, 4) ແຍກເປັນຂັ້ນຍ່ອຍ, 5) ບອກສິ່ງທີ່ບໍ່ຕ້ອງການ.' },
+  { t: 'Token / Context window', keys: ['token', 'context window', 'ຄວາມຍາວ', 'ຈຳກັດຂໍ້ຄວາມ'], a: 'Token ແມ່ນຫົວໜ່ວຍຂໍ້ຄວາມທີ່ AI ອ່ານ. Context window ແມ່ນປະລິມານຂໍ້ຄວາມສູງສຸດທີ່ AI ຈື່ໄດ້ໃນການສົນທະນາ; ຍາວເກີນ AI ອາດລືມຕອນຕົ້ນ.' },
+  { t: 'ອະຄະຕິ (Bias)', keys: ['bias', 'ອະຄະຕິ', 'ລຳອຽງ'], a: 'AI ຮຽນຈາກຂໍ້ມູນຂອງມະນຸດ ຈຶ່ງອາດຮັບອະຄະຕິມາ. ຄວນທົບທວນຜົນ, ໃຊ້ຫຼາຍແຫຼ່ງ ແລະບໍ່ໃຊ້ AI ຕັດສິນເລື່ອງສຳຄັນຕໍ່ຄົນແທນມະນຸດ.' },
+  { t: 'ໃຊ້ AI ໃນວຽກວິສະວະກຳ', keys: ['ວິສະວະກຳ', 'ວິສະວະກອນ', 'ປະປາ', 'engineer'], a: 'ໃຊ້ AI ຊ່ວຍຮ່າງລາຍງານ, ສະຫຼຸບ, ເຮັດ checklist ແລະອະທິບາຍແນວຄິດ. ແຕ່ການຄຳນວນ ແລະຄວາມປອດໄພ ຕ້ອງກວດດ້ວຍມາດຕະຖານ ແລະຜູ້ຊ່ຽວຊານ.' },
+  { t: 'ສ້າງ SOP / ແຜນງານ', keys: ['sop', 'ຂັ້ນຕອນການເຮັດວຽກ', 'ແຜນງານ', 'ລາຍງານ'], a: 'ສ້າງ SOP: ບອກຂະບວນການ, ຜູ້ຮັບຜິດຊອບ ແລະຜົນທີ່ຕ້ອງການ ໃຫ້ AI ຮ່າງເປັນຕາຕະລາງ ແລ້ວຜູ້ຊ່ຽວຊານກວດ ແລະທົດລອງໃຊ້ຈິງ.' },
+  { t: 'ໃຊ້ແອັບແບບ Offline', keys: ['offline', 'ອອບລາຍ', 'ບໍ່ມີອິນເຕີເນັດ', 'ອິນເຕີເນັດ', 'ຕິດຕັ້ງ'], a: 'ເປີດແອັບອອນລາຍຄັ້ງທຳອິດໃຫ້ລະບົບເກັບໄຟລ໌ໄວ້ ຈາກນັ້ນໃຊ້ Offline ໄດ້. ເພີ່ມໃສ່ໜ້າຈໍຫຼັກ (Add to Home Screen) ເພື່ອໃຊ້ຄືແອັບ.' },
+  { t: 'ສຳຮອງຄວາມຄືບໜ້າ', keys: ['ສຳຮອງ', 'backup', 'ກູ້ຂໍ້ມູນ', 'ນຳເຂົ້າ'], a: 'ຄວາມຄືບໜ້າເກັບໃນ Browser ຂອງອຸປະກອນນີ້. ໄປແຖບ ຄວາມຄືບໜ້າ ແລ້ວກົດ ສຳຮອງຂໍ້ມູນ ເພື່ອໄດ້ໄຟລ໌ JSON ແລະນຳເຂົ້າໃນເຄື່ອງອື່ນໄດ້.' },
+  { t: 'ການແປ / ພາສາອັງກິດ', keys: ['ແປ', 'translate', 'ພາສາອັງກິດ', 'english'], a: 'ໃຫ້ AI ຊ່ວຍແປ ໂດຍບອກຜູ້ອ່ານ ແລະລະດັບພາສາ ເຊັ່ນ “ແປເປັນອັງກິດທາງການແບບງ່າຍ ພ້ອມຄຳສັບສຳຄັນ”. ແລ້ວກວດຄວາມໝາຍອີກຄັ້ງ.' }
+];
+const normQ = s => (s || '').toLowerCase().replace(/[?!.,؟]/g, '').trim();
+function findAnswer(q) {
+  const n = normQ(q); let best = null, bs = 0;
+  tutorKB.forEach(e => { const sc = e.keys.reduce((a, k) => a + (n.includes(k) ? k.length + 1 : 0), 0); if (sc > bs) { bs = sc; best = e; } });
+  return best;
+}
+function addBubble(cls, text) {
+  const chat = document.getElementById('tutor-chat'), d = document.createElement('div');
+  d.className = cls; d.textContent = text; chat.appendChild(d); chat.scrollTop = chat.scrollHeight; return d;
+}
+function askTutor(q) {
+  q = (q || '').trim(); if (!q) return;
+  addBubble('ml-auto bg-orange-600/20 border border-orange-500/30 rounded-2xl p-3 text-sm max-w-3xl', q);
+  const hit = findAnswer(q);
+  if (hit) { addBubble('bg-slate-900 rounded-2xl p-4 text-sm max-w-3xl', hit.a); return; }
+  const sug = tutorKB.slice().sort(() => Math.random() - .5).slice(0, 3);
+  const b = addBubble('bg-slate-900 rounded-2xl p-4 text-sm max-w-3xl space-y-2', 'ຂໍອະໄພ, ຖານຄວາມຮູ້ Offline ຍັງບໍ່ມີຄຳຕອບເລື່ອງນີ້. ລອງຖາມຫົວຂໍ້ເຫຼົ່ານີ້:');
+  sug.forEach(e => { const x = document.createElement('button'); x.className = 'chip block'; x.textContent = e.t; x.onclick = () => askTutor(e.t); b.appendChild(x); });
+}
+function renderTutorChips() {
+  const c = document.getElementById('tutor-chips'); if (!c) return;
+  c.innerHTML = ''; tutorKB.slice(0, 8).forEach(e => { const x = document.createElement('button'); x.className = 'chip'; x.textContent = e.t; x.onclick = () => askTutor(e.t); c.appendChild(x); });
+  setText('kb-count', String(tutorKB.length));
+}
+
+// ----- Quiz (random 8 of bank, shuffled options, explanations) -----
+const QUIZ_BANK = [
+  { q: 'Prompt ແມ່ນຫຍັງ?', o: ['ຂໍ້ຄວາມຄຳສັ່ງໃຫ້ AI', 'ຊື່ຄອມພິວເຕີ', 'ລະຫັດຜ່ານ'], a: 0, e: 'Prompt ແມ່ນຄຳສັ່ງ ຫຼືຄຳຖາມທີ່ເຮົາປ້ອນໃຫ້ AI.' },
+  { q: 'ຕົວ R ໃນ RTCF ໝາຍເຖິງຫຍັງ?', o: ['Result', 'Role', 'Report'], a: 1, e: 'R = Role ບົດບາດທີ່ໃຫ້ AI ສວມ.' },
+  { q: 'Context ໃນ Prompt ແມ່ນຫຍັງ?', o: ['ສີຂອງໜ້າຈໍ', 'ບໍລິບົດ ແລະເງື່ອນໄຂ', 'ຊື່ AI'], a: 1, e: 'Context ໃຫ້ຂໍ້ມູນພື້ນຖານ ເຮັດໃຫ້ຄຳຕອບຕົງກັບສະຖານະການ.' },
+  { q: 'ເມື່ອ AI ໃຫ້ຕົວເລກທາງວິສະວະກຳ ຄວນເຮັດແນວໃດ?', o: ['ເຊື່ອທັນທີ', 'ສົ່ງຕໍ່ທັນທີ', 'ກວດສອບກັບແຫຼ່ງຂໍ້ມູນ'], a: 2, e: 'AI ອາດ hallucinate ຈຶ່ງຕ້ອງກວດຕົວເລກກ່ອນໃຊ້.' },
+  { q: 'AI Tutor ໃນແອັບນີ້ເຮັດວຽກແນວໃດ?', o: ['ຄົ້ນຫາທຸກເວັບໄຊ', 'ຈັບຄູ່ຄຳຖາມກັບຖານຄວາມຮູ້ພາຍໃນ', 'ໃຊ້ LLM ຜ່ານ API'], a: 1, e: 'ເປັນ Offline Tutor ທີ່ຈັບຄຳສຳຄັນກັບຖານຄວາມຮູ້ໃນແອັບ.' },
+  { q: 'Hallucination ໝາຍເຖິງຫຍັງ?', o: ['AI ຕອບຟັງໜ້າເຊື່ອ ແຕ່ຜິດ', 'AI ຕອບໄວ', 'AI ປິດເຄື່ອງ'], a: 0, e: 'Hallucination ແມ່ນຄຳຕອບທີ່ສ້າງຂຶ້ນ ບໍ່ມີຫຼັກຖານ.' },
+  { q: 'ຂໍ້ມູນໃດ ບໍ່ຄວນ ປ້ອນໃນ AI ສາທາລະນະ?', o: ['ຄຳຖາມທົ່ວໄປ', 'ລະຫັດຜ່ານ ແລະເອກະສານລັບ', 'ຫົວຂໍ້ບົດຮຽນ'], a: 1, e: 'ຂໍ້ມູນລັບອາດຖືກເກັບ ຫຼືຮົ່ວໄຫຼ.' },
+  { q: 'Few-shot Prompting ຄືຫຍັງ?', o: ['ຖາມສັ້ນໆ', 'ໃສ່ຕົວຢ່າງໃຫ້ AI ເຮັດຕາມ', 'ປິດ AI ຊົ່ວຄາວ'], a: 1, e: 'ການໃສ່ຕົວຢ່າງ 1-3 ອັນ ຊ່ວຍກຳນົດຮູບແບບຄຳຕອບ.' },
+  { q: 'Chain of Thought ຊ່ວຍຫຍັງ?', o: ['ໃຫ້ AI ຄິດເທື່ອລະຂັ້ນຕອນ', 'ເພີ່ມຄວາມໄວອິນເຕີເນັດ', 'ລຶບຂໍ້ມູນ'], a: 0, e: 'ການຄິດເປັນຂັ້ນຕອນຊ່ວຍວຽກວິເຄາະໃຫ້ຖືກຕ້ອງຂຶ້ນ.' },
+  { q: 'NotebookLM ເໝາະກັບວຽກໃດທີ່ສຸດ?', o: ['ຖາມ-ຕອບຈາກເອກະສານທີ່ນຳເຂົ້າ', 'ແກ້ໄຂຮູບຖ່າຍ', 'ຄວບຄຸມປັ໊ມນ້ຳ'], a: 0, e: 'NotebookLM ເນັ້ນຕອບຈາກເອກະສານຂອງຜູ້ໃຊ້.' },
+  { q: 'ຖ້າຄຳຕອບຂອງ AI ບໍ່ຕົງໃຈ ຄວນເຮັດຫຍັງກ່ອນ?', o: ['ເຊົາໃຊ້ AI', 'ປັບ Prompt: ເພີ່ມບໍລິບົດ/ຕົວຢ່າງ', 'ຖາມຄຳຖາມເດີມຊ້ຳໆ'], a: 1, e: 'Prompt ທີ່ຊັດເຈນຂຶ້ນ ໃຫ້ຜົນດີກວ່າການຖາມຊ້ຳ.' },
+  { q: 'Format ໃນ RTCF ໝາຍເຖິງຫຍັງ?', o: ['ຮູບແບບຄຳຕອບທີ່ຕ້ອງການ', 'ການລຶບຂໍ້ມູນ', 'ຊື່ໄຟລ໌'], a: 0, e: 'Format ກຳນົດວ່າຕ້ອງການຕາຕະລາງ, ລາຍການ ຫຼືຈຳນວນຂໍ້.' },
+  { q: 'Generative AI ຕ່າງຈາກລະບົບທົ່ວໄປແນວໃດ?', o: ['ສ້າງເນື້ອຫາໃໝ່ໄດ້', 'ເປີດເວັບໄວກວ່າ', 'ໃຊ້ໄຟຟ້ານ້ອຍກວ່າ'], a: 0, e: 'Generative AI ສ້າງຂໍ້ຄວາມ, ຮູບ, ໂຄ້ດ ຈາກ Prompt.' },
+  { q: 'ກ່ອນສົ່ງບັນທຶກການປະຊຸມໃຫ້ AI ສາທາລະນະ ຄວນເຮັດຫຍັງ?', o: ['ສົ່ງທັງໝົດທັນທີ', 'ປິດຊື່ ແລະຂໍ້ມູນລັບກ່ອນ', 'ເພີ່ມລະຫັດຜ່ານໃນເອກະສານ'], a: 1, e: 'ຕັດຂໍ້ມູນທີ່ລະບຸຕົວຕົນ ແລະຂໍ້ມູນລັບອອກກ່ອນ.' },
+  { q: 'ເປັນຫຍັງຕ້ອງມີຄົນກວດ SOP ທີ່ AI ຮ່າງ?', o: ['AI ຂຽນບໍ່ໄດ້', 'ຂັ້ນຕອນຄວາມປອດໄພອາດຜິດ ແລະຄົນຕ້ອງຮັບຜິດຊອບ', 'ເພື່ອໃຫ້ເອກະສານຍາວຂຶ້ນ'], a: 1, e: 'AI ຊ່ວຍຮ່າງ ແຕ່ຄວາມຖືກຕ້ອງ ແລະຄວາມປອດໄພເປັນໜ້າທີ່ຂອງຄົນ.' }
+];
+let quizSession = [];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function startQuiz() {
+  quizSession = shuffle(QUIZ_BANK).slice(0, 8).map(q => {
+    const opts = shuffle(q.o.map((t, i) => ({ t, ok: i === q.a })));
+    return { q: q.q, e: q.e, opts };
+  });
+  setText('quiz-result', ''); const sb = document.getElementById('quiz-submit'); if (sb) sb.disabled = false;
+  renderQuiz();
+}
+function renderQuiz() {
+  const root = document.getElementById('quiz-questions'); if (!root) return;
+  root.innerHTML = quizSession.map((q, i) => `<fieldset id="qz-${i}" class="border-b border-slate-700 pb-4"><legend class="font-bold mb-2">${i + 1}. ${q.q}</legend>${q.opts.map((o, j) => `<label class="opt"><input type="radio" name="quiz-${i}" value="${j}" class="accent-orange-500"> <span>${o.t}</span></label>`).join('')}<p class="qz-exp hidden text-xs text-slate-400 mt-2"></p></fieldset>`).join('');
+}
+function submitQuiz() {
+  let score = 0, missing = 0;
+  quizSession.forEach((q, i) => { if (!document.querySelector(`input[name="quiz-${i}"]:checked`)) missing++; });
+  if (missing) { showToast(`ຍັງເຫຼືອ ${missing} ຂໍ້ທີ່ຍັງບໍ່ໄດ້ຕອບ`); const f = quizSession.findIndex((q, i) => !document.querySelector(`input[name="quiz-${i}"]:checked`)); const el = document.getElementById('qz-' + f); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  quizSession.forEach((q, i) => {
+    const chosen = Number(document.querySelector(`input[name="quiz-${i}"]:checked`).value), fs = document.getElementById('qz-' + i), labels = fs.querySelectorAll('.opt');
+    if (q.opts[chosen].ok) score++;
+    labels.forEach((l, j) => { l.querySelector('input').disabled = true; if (q.opts[j].ok) l.classList.add('ok'); else if (j === chosen) l.classList.add('bad'); });
+    const p = fs.querySelector('.qz-exp'); p.textContent = (q.opts[chosen].ok ? '✅ ຖືກຕ້ອງ. ' : '❌ ບໍ່ຖືກ. ') + q.e; p.classList.remove('hidden');
+  });
+  const total = quizSession.length, pct = Math.round(score / total * 100), d = getProgress();
+  d.score = pct; d.best = Math.max(d.best || 0, pct); d.attempts = (d.attempts || 0) + 1; saveProgress(d);
+  document.getElementById('quiz-submit').disabled = true;
+  setText('quiz-result', `ຜົນຄະແນນ: ${score}/${total} (${pct}%). ${pct >= 80 ? 'ດີຫຼາຍ! 🎉' : 'ຄວນທົບທວນບົດຮຽນ ແລ້ວກົດ ເລີ່ມໃໝ່.'}`);
+  document.getElementById('quiz-result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ----- Backup / restore -----
+function exportProgress() { const blob = new Blob([JSON.stringify(getProgress(), null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bounma-progress-backup.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
+function importProgress(e) {
+  const f = e.target.files[0]; if (!f) return; const r = new FileReader();
+  r.onload = () => { try {
+    const d = JSON.parse(r.result); if (!Array.isArray(d.lessons)) throw Error();
+    const num = v => Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : null;
+    saveProgress({ lessons: [...new Set(d.lessons)].filter(x => LESSONS.some(l => l.id === x)), score: num(d.score), best: num(d.best), attempts: Number.isInteger(d.attempts) && d.attempts > 0 ? d.attempts : 0 });
+    showToast('ນຳເຂົ້າຂໍ້ມູນສຳເລັດ');
+  } catch (err) { showToast('ໄຟລ໌ສຳຮອງບໍ່ຖືກຕ້ອງ'); } e.target.value = ''; };
+  r.readAsText(f);
+}
+function resetProgress() { if (!confirm('ຢືນຢັນລ້າງຄວາມຄືບໜ້າທັງໝົດ?')) return; try { localStorage.removeItem(progressKey); } catch (e) {} renderProgress(); showToast('ລ້າງຂໍ້ມູນແລ້ວ'); }
+function initLearning() { renderTutorChips(); startQuiz(); renderProgress(); }
 
 
         // Initialize default view on load
         window.onload = function() {
-            switchTab('prompt-eng');
-            applyPreset('image');
-            renderQuiz();
-            renderProgress();
+            switchTab('dashboard');
+            applyPreset('image', true);
+            initLearning();
             if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed', err));
         };
     </script>
