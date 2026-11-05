@@ -9,11 +9,7 @@
   "background_color": "#020617",
   "theme_color": "#f97316",
   "icons": [
-    {
-      "src": "assets/bounma-mascot.png",
-      "sizes": "any",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "assets/bounma-mascot-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/bounma-mascot-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }

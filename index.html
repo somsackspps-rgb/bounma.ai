@@ -7,6 +7,8 @@
     <meta name="theme-color" content="#f97316">
     <meta name="description" content="ແພລດຟອມຮຽນຮູ້ AI ພາສາລາວ ພ້ອມ Offline Tutor ແລະ Prompt Builder">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="assets/bounma-mascot-128.png">
+    <link rel="apple-touch-icon" href="assets/bounma-mascot-192.png">
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
     <!-- Tailwind CSS -->
@@ -97,23 +99,25 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
 
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-0">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:bg-orange-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-xl">ຂ້າມໄປເນື້ອໃນ</a>
+    <div id="net-banner" role="status" aria-live="polite" class="hidden fixed top-0 inset-x-0 z-[65] bg-amber-600 text-white text-center text-xs font-bold py-1.5">📡 ບໍ່ມີອິນເຕີເນັດ — ກຳລັງໃຊ້ໂໝດ Offline (ບາງຟັງຊັນອາດໃຊ້ບໍ່ໄດ້)</div>
 
     <!-- Toast Notification Message -->
-    <div id="toast" class="fixed top-4 right-4 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 ease-out bg-orange-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-orange-400/40">
+    <div id="toast" role="status" aria-live="polite" class="fixed top-4 right-4 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 ease-out bg-orange-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-orange-400/40">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
         <span id="toast-message" class="text-sm font-semibold">ສໍາເລັດ!</span>
     </div>
 
     <!-- Application Top Bar -->
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
             <!-- Brand Logo & Robot Mascot "ບຸນມາ" -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('dashboard')">
-                <div class="relative w-11 h-11 bg-slate-800 border border-orange-500/40 rounded-2xl p-1 shadow-lg shadow-orange-500/10 flex items-center justify-center robot-glow"><img src="assets/bounma-mascot.png" alt="Bounma AI mascot" class="mascot-header w-full h-full object-contain"></div>
+                <div class="relative w-11 h-11 bg-slate-800 border border-orange-500/40 rounded-2xl p-1 shadow-lg shadow-orange-500/10 flex items-center justify-center robot-glow"><img src="assets/bounma-mascot-128.png" alt="Bounma AI mascot" width="44" height="44" class="mascot-header w-full h-full object-contain"></div>
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="font-extrabold text-lg md:text-xl tracking-tight text-white">ບຸນມາ AI</h1>
-                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v3.1</span>
+                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v3.2</span>
                     </div>
                     <p class="text-xs text-slate-400">ລະບົບຮຽນຮູ້ & ເຄື່ອງມື Prompt ອັດສະລິຍະ</p>
                 </div>
@@ -128,7 +132,7 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
 
         <!-- Desktop Navigation Bar -->
         <nav class="hidden md:flex justify-center border-t border-slate-800/80 bg-slate-900/70">
-            <div class="flex w-full max-w-6xl px-2 gap-2 text-sm font-medium">
+            <div class="flex w-full max-w-6xl px-2 gap-2 text-sm font-medium overflow-x-auto custom-scrollbar">
                 <button id="tab-btn-dashboard" onclick="switchTab('dashboard')" class="tab-btn py-3 px-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm">🏠 ໜ້າຫຼັກ</button>
                 <button id="tab-btn-prompt-eng" onclick="switchTab('prompt-eng')" class="tab-btn py-3 px-4 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
@@ -155,7 +159,7 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
     </header>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 space-y-8">
+    <main id="main" tabindex="-1" class="flex-1 outline-none max-w-6xl w-full mx-auto px-4 py-6 space-y-8">
 
         <!-- Welcome Mascot Card -->
         <section id="welcome-card" class="app-card rounded-3xl p-6 md:p-8 relative overflow-hidden border border-orange-500/20 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800">
@@ -760,6 +764,9 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
                 }
             });
             const w = document.getElementById('welcome-card'); if (w) w.classList.toggle('hidden', tabId !== 'dashboard');
+            document.querySelectorAll('[id^="tab-btn-"]').forEach(b => b.removeAttribute('aria-current'));
+            const cur = document.getElementById('tab-btn-' + tabId); if (cur) cur.setAttribute('aria-current', 'page');
+            if (!/access_token|refresh_token|type=/.test(location.hash)) { try { history.replaceState(null, '', '#' + tabId); } catch (e) {} }
             if (tabId === 'dashboard') renderProgress();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -910,17 +917,19 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
         }
 
         // Toast Notification System
+        let toastTimer = null;
         function showToast(msg) {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toast-message');
             if (!toast || !toastMsg) return;
-            toastMsg.innerText = msg;
+            toastMsg.textContent = msg;
             toast.classList.remove('translate-y-[-100px]', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
-            setTimeout(() => {
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
                 toast.classList.add('translate-y-[-100px]', 'opacity-0');
-            }, 2500);
+            }, 3200);
         }
 
 
@@ -1151,8 +1160,11 @@ function initLearning() { renderTutorChips(); startQuiz(); renderProgress(); }
 
         // Initialize default view on load
         window.onload = function() {
-            switchTab('dashboard');
+            const h0 = location.hash.slice(1);
+            switchTab(h0 && document.getElementById('sec-' + h0) ? h0 : 'dashboard');
             applyPreset('image', true);
+            const nb = document.getElementById('net-banner'), setNet = () => nb && nb.classList.toggle('hidden', navigator.onLine);
+            window.addEventListener('online', setNet); window.addEventListener('offline', setNet); setNet();
             initLearning();
             if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed', err));
         };
