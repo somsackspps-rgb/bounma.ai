@@ -1,6 +1,6 @@
-const CACHE_NAME = 'bounma-ai-v3-shell-v3';
-const APP_SHELL = ['./', './index.html', './manifest.json', './assets/bounma-mascot.png'];
-const EXTERNAL = ['https://cdn.tailwindcss.com', 'https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700;800&display=swap'];
+const CACHE_NAME = 'bounma-ai-v3-shell-v4';
+const APP_SHELL = ['./', './index.html', './manifest.json', './config.js', './auth.js', './assets/bounma-mascot.png'];
+const EXTERNAL = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js', 'https://cdn.tailwindcss.com', 'https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700;800&display=swap'];
 const cacheable = res => res && (res.ok || res.type === 'opaque');
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(async cache => {
