@@ -2,7 +2,7 @@
 (function () {
   const C = window.BOUNMA_CONFIG || {};
   if (!(C.url && C.key && window.supabase)) { console.warn('Supabase not configured: running in guest (local-only) mode.'); return; }
-  const sb = window.supabase.createClient(C.url, C.key, { auth: { persistSession: true, autoRefreshToken: true } });
+  const sb = window.supabase.createClient(C.url, C.key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' } });
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const RL = { admin: 'Admin', teacher: 'ຄູ', student: 'ນັກຮຽນ' }, ST = { pending: 'ລໍຖ້າອະນຸມັດ', approved: 'ອະນຸມັດແລ້ວ', rejected: 'ຖືກປະຕິເສດ' };
@@ -156,10 +156,21 @@
     busy = true; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>ກຳລັງດຳເນີນການ...'; setMsg('');
     try {
       if (mode === 'register') {
+        // A registration is a separate identity flow. Clear any prior local session
+        // so the previous account cannot remain attached to the new registration.
+        const { data: existingSession } = await sb.auth.getSession();
+        if (existingSession && existingSession.session) {
+          const { error: clearError } = await sb.auth.signOut({ scope: 'local' });
+          if (clearError) throw clearError;
+        }
         const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: val('a-name').trim(), role: val('a-role') === 'teacher' ? 'teacher' : 'student' }, emailRedirectTo: location.origin + location.pathname } });
         if (error) throw error;
         if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw new Error('User already registered');
-        if (!data.session) showAuth('login', 'ສະໝັກສຳເລັດ! ກະລຸນາກວດອີເມວເພື່ອຢືນຢັນ ແລ້ວເຂົ້າສູ່ລະບົບ. ຈາກນັ້ນລໍຖ້າ Admin ອະນຸມັດ.', true);
+        if (data.session) {
+          const { error: clearNewSessionError } = await sb.auth.signOut({ scope: 'local' });
+          if (clearNewSessionError) throw clearNewSessionError;
+        }
+        showAuth('login', 'ສະໝັກສຳເລັດ! ກະລຸນາຢືນຢັນອີເມວ (ຖ້າລະບົບກຳນົດ) ແລ້ວລໍຖ້າ Admin ອະນຸມັດ.', true);
       } else if (mode === 'forgot') {
         const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname }); if (error) throw error;
         showAuth('login', 'ຖ້າອີເມວນີ້ມີໃນລະບົບ ເຮົາໄດ້ສົ່ງລິ້ງຕັ້ງລະຫັດຜ່ານໃໝ່ໃຫ້ແລ້ວ ກະລຸນາກວດອີເມວ.', true);
@@ -172,7 +183,20 @@
     } catch (e) { const b2 = $('a-btn'); if (b2) { b2.disabled = false; b2.textContent = label; } setMsg(errText(e)); }
     busy = false;
   }
-  const logout = async () => { try { await sb.auth.signOut(); } catch (e) { console.warn(e); } };
+  const logout = async () => {
+    if (busy) return;
+    try {
+      const { error } = await sb.auth.signOut({ scope: 'local' });
+      if (error) throw error;
+      // The SIGNED_OUT event normally updates the screen; refresh explicitly
+      // as a fallback for browsers where the event is delayed.
+      me = null; profile = null; seq++; clearTimeout(pushTimer);
+      cleanupUI(); hideGate(); progressKey = GUEST; renderProgress(); showAuth('login');
+    } catch (e) {
+      console.error('Logout failed:', e);
+      showToast('ອອກຈາກລະບົບບໍ່ສຳເລັດ: ' + (e.message || 'ກະລຸນາລອງໃໝ່'));
+    }
+  };
 
   // ================= Session handling (race-safe) =================
   const retryBtns = '<div class="flex gap-2"><button onclick="BAuth.refresh()" class="bg-emerald-700 px-4 py-2 rounded-xl text-sm font-bold">ລອງໃໝ່</button><button onclick="BAuth.logout()" class="bg-slate-700 px-4 py-2 rounded-xl text-sm">ອອກຈາກລະບົບ</button></div>';
@@ -180,6 +204,7 @@
   async function onSession(session) {
     const my = ++seq;
     if (!session) { me = null; profile = null; clearTimeout(pushTimer); hideGate(); cleanupUI(); progressKey = GUEST; renderProgress(); showAuth('login'); return; }
+    if (me && me.id !== session.user.id) profile = null;
     me = session.user;
     if (!profile) gate('<p class="text-sm text-slate-400"><span class="spin"></span>ກຳລັງໂຫຼດ...</p>');
     const { data, error } = await fetchProfile(me.id);
@@ -215,10 +240,11 @@
     chip.innerHTML = `<span class="hidden sm:inline text-slate-300">${esc(profile.full_name || profile.email)} · <b class="text-orange-400">${RL[profile.role] || ''}</b></span><button onclick="BAuth.logout()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5">ອອກ</button>`;
     if (profile.role === 'admin') addTab('admin', '👑', 'ຜູ້ໃຊ້');
     if (profile.role === 'admin' || profile.role === 'teacher') addTab('teacher', '👩‍🏫', 'ນັກຮຽນ');
+    addTab('classroom', '💬', 'ຫ້ອງຮຽນ');
     const dash = $('sec-dashboard'); if (dash) { let h = $('dash-hello'); if (!h) { h = document.createElement('p'); h.id = 'dash-hello'; h.className = 'text-lg font-bold'; dash.insertBefore(h, dash.firstChild); } h.textContent = 'ສະບາຍດີ, ' + (profile.full_name || profile.email) + ' 👋'; }
     if (location.hash === '#admin' && profile.role === 'admin') switchTab('admin'); else if (location.hash === '#teacher' && profile.role !== 'student') switchTab('teacher');
   }
-  function cleanupUI() { ['user-chip', 'dash-hello', 'tab-btn-admin', 'mob-tab-admin', 'sec-admin', 'tab-btn-teacher', 'mob-tab-teacher', 'sec-teacher'].forEach(i => { const e = $(i); if (e) e.remove(); }); }
+  function cleanupUI() { ['user-chip', 'dash-hello', 'tab-btn-admin', 'mob-tab-admin', 'sec-admin', 'tab-btn-teacher', 'mob-tab-teacher', 'sec-teacher', 'tab-btn-classroom', 'mob-tab-classroom', 'sec-classroom'].forEach(i => { const e = $(i); if (e) e.remove(); }); }
   const head = (t, s) => `<div class="border-b border-slate-800 pb-4"><h2 class="text-2xl font-bold">${t}</h2><p class="text-sm text-slate-400 mt-1">${s}</p></div>`;
 
   // ----- Admin panel -----
@@ -276,6 +302,127 @@
   }
   const _st = switchTab; switchTab = function (t) { _st(t); if (t === 'admin') loadAdmin(); if (t === 'teacher') loadTeacher(); };
 
+
+  // ================= Classrooms & real-time group chat =================
+  let roomRows = [], activeRoom = null, roomChannel = null, messageRows = [], roomBusy = false;
+  const ROOM_BUCKET = 'classroom-files';
+  const initials = n => (String(n || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase() || '?');
+  const fmtTime = v => { try { return new Date(v).toLocaleString('lo-LA',{dateStyle:'short',timeStyle:'short'}); } catch (_) { return v || ''; } };
+  function roomShell() {
+    let box = $('sec-classroom');
+    if (!box) { box=document.createElement('section'); box.id='sec-classroom'; box.className='tab-content hidden space-y-6'; document.querySelector('main').appendChild(box); }
+    return box;
+  }
+  async function loadClassroom() {
+    const box=roomShell();
+    box.innerHTML=head('💬 ຫ້ອງຮຽນ','ຫ້ອງສົນທະນາ ແລະການຮຽນຮ່ວມກັນ')+'<p class="text-sm text-slate-400"><span class="spin"></span> ກຳລັງໂຫຼດຫ້ອງຮຽນ...</p>';
+    const {data,error}=await sb.from('classroom_groups').select('id,name,description,join_code,created_by,created_at').order('created_at',{ascending:false});
+    if(error){box.innerHTML=head('💬 ຫ້ອງຮຽນ','')+`<p class="text-sm text-red-300">ໂຫຼດຫ້ອງຮຽນບໍ່ສຳເລັດ: ${esc(error.message)}. ກວດວ່າໄດ້ຣັນ SQL ສ່ວນ Classroom ແລ້ວ.</p>`;return;}
+    roomRows=data||[];
+    const canTeach=profile && ['teacher','admin'].includes(profile.role);
+    box.innerHTML=head('💬 ຫ້ອງຮຽນ',canTeach?'ສ້າງກຸ່ມ ແລະຈັດການການສົນທະນາ':'ໃສ່ລະຫັດທີ່ຄູສົ່ງໃຫ້ ເພື່ອເຂົ້າກຸ່ມ')+
+      `<form id="avatar-form" class="app-card rounded-2xl p-3 flex flex-wrap items-center gap-3"><div class="w-11 h-11 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold">${profile.avatar_url?`<img src="${esc(profile.avatar_url)}" class="w-full h-full object-cover">`:esc(initials(profile.full_name))}</div><div class="flex-1 min-w-[150px]"><p class="text-sm font-bold">ຮູບໂປຣໄຟລ໌</p><p class="text-xs text-slate-400">ຮູບ JPG, PNG ຫຼື WebP ບໍ່ເກີນ 2 MB</p><input id="avatar-file" type="file" accept="image/jpeg,image/png,image/webp" class="text-xs mt-1"></div><button class="chip">ບັນທຶກຮູບ</button></form>`+
+      (canTeach?`<form id="room-create" class="app-card rounded-2xl p-4 space-y-3"><h3 class="font-bold">＋ ສ້າງກຸ່ມຮຽນ</h3><input id="room-name" class="${IN}" maxlength="80" placeholder="ຊື່ກຸ່ມ / ຫົວຂໍ້ຫ້ອງຮຽນ" required><textarea id="room-desc" class="${IN}" rows="2" maxlength="300" placeholder="ລາຍລະອຽດ (ບໍ່ບັງຄັບ)"></textarea><button class="bg-orange-600 hover:bg-orange-500 rounded-xl px-4 py-2 text-sm font-bold">ສ້າງກຸ່ມ</button></form>`:'')+
+      `<form id="room-join" class="app-card rounded-2xl p-4 flex flex-wrap gap-2"><input id="room-code" class="${IN} flex-1 min-w-[180px]" placeholder="ລະຫັດເຂົ້າກຸ່ມ" maxlength="12" required><button class="bg-emerald-700 rounded-xl px-4 py-2 text-sm font-bold">ເຂົ້າກຸ່ມ</button></form><div id="room-list" class="grid md:grid-cols-2 gap-3"></div><div id="room-chat"></div>`;
+    $('avatar-form').onsubmit=uploadAvatar;
+    if(canTeach) $('room-create').onsubmit=createRoom;
+    $('room-join').onsubmit=joinRoom;
+    renderRoomList();
+  }
+  async function uploadAvatar(ev){
+    ev.preventDefault(); const file=$('avatar-file').files[0]; if(!file)return showToast('ກະລຸນາເລືອກຮູບກ່ອນ');
+    if(file.size>2*1024*1024)return showToast('ຮູບຕ້ອງມີຂະໜາດບໍ່ເກີນ 2 MB');
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type))return showToast('ຮອງຮັບ JPG, PNG ແລະ WebP');
+    const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg', path=me.id+'/avatar.'+ext;
+    const {error:upErr}=await sb.storage.from('profile-avatars').upload(path,file,{upsert:true,contentType:file.type});
+    if(upErr)return showToast('ອັບໂຫຼດຮູບບໍ່ສຳເລັດ: '+upErr.message);
+    const {data}=sb.storage.from('profile-avatars').getPublicUrl(path);
+    const avatarUrl=data.publicUrl+'?v='+Date.now();
+    const {error}=await sb.from('profiles').update({avatar_url:avatarUrl}).eq('id',me.id);
+    if(error)return showToast('ບັນທຶກຮູບບໍ່ສຳເລັດ: '+error.message);
+    profile.avatar_url=avatarUrl; showToast('ອັບเดດຮູບໂປຣໄຟລ໌ແລ້ວ'); await loadClassroom();
+    if(activeRoom){const id=activeRoom.id; openRoom(id);}
+  }
+  async function createRoom(ev){
+    ev.preventDefault(); if(roomBusy)return; roomBusy=true;
+    const name=$('room-name').value.trim(), description=$('room-desc').value.trim();
+    const {data,error}=await sb.from('classroom_groups').insert({name,description,created_by:me.id}).select('id,name,join_code').single();
+    roomBusy=false;
+    if(error){showToast('ສ້າງກຸ່ມບໍ່ສຳເລັດ: '+error.message);return;}
+    showToast('ສ້າງກຸ່ມແລ້ວ • ລະຫັດ: '+data.join_code);
+    await loadClassroom(); openRoom(data.id);
+  }
+  async function joinRoom(ev){
+    ev.preventDefault(); const code=$('room-code').value.trim().toUpperCase(); if(!code)return;
+    const {data,error}=await sb.rpc('join_classroom_by_code',{p_code:code});
+    if(error){showToast('ເຂົ້າກຸ່ມບໍ່ສຳເລັດ: '+error.message);return;}
+    showToast('ເຂົ້າກຸ່ມຮຽນແລ້ວ'); await loadClassroom(); if(data) openRoom(data);
+  }
+  function renderRoomList(){
+    const el=$('room-list'); if(!el)return;
+    el.innerHTML=roomRows.length?roomRows.map(r=>`<button type="button" onclick="BAuth.openRoom('${r.id}')" class="app-card rounded-2xl p-4 text-left hover:border-orange-500/50 border border-slate-700"><div class="font-bold">${esc(r.name)}</div><p class="text-xs text-slate-400 mt-1">${esc(r.description||'ບໍ່ມີລາຍລະອຽດ')}</p>${profile.role!=='student'?`<p class="text-xs text-orange-300 mt-2">ລະຫັດເຊີນ: <b>${esc(r.join_code||'')}</b></p>`:''}</button>`).join(''):'<p class="text-sm text-slate-400">ທ່ານຍັງບໍ່ມີກຸ່ມຮຽນ</p>';
+  }
+  async function openRoom(id){
+    const r=roomRows.find(x=>x.id===id); if(!r)return;
+    activeRoom=r; messageRows=[];
+    if(roomChannel){await sb.removeChannel(roomChannel);roomChannel=null;}
+    const chat=$('room-chat'); if(!chat)return;
+    chat.innerHTML=`<div class="app-card rounded-2xl p-4 space-y-3"><div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-bold text-lg">${esc(r.name)}</h3><p class="text-xs text-slate-400">${esc(r.description||'')}</p></div>${profile.role!=='student'?`<button onclick="BAuth.announce()" class="chip">📢 ປະກາດ</button>`:''}</div><div id="room-messages" class="space-y-3 max-h-[55vh] overflow-y-auto p-2 bg-slate-950/50 rounded-xl"><p class="text-sm text-slate-400">ກຳລັງໂຫຼດຂໍ້ຄວາມ...</p></div><form id="room-send" class="space-y-2"><textarea id="room-text" class="${IN}" rows="2" maxlength="4000" placeholder="ພິມຂໍ້ຄວາມ..." ></textarea><div class="flex flex-wrap items-center justify-between gap-2"><label class="text-xs text-slate-400">ແນບຮູບພາບ / PDF <input id="room-file" type="file" accept="image/*,application/pdf" class="block text-xs mt-1"></label><button class="bg-emerald-700 rounded-xl px-5 py-2 text-sm font-bold">ສົ່ງ</button></div></form></div>`;
+    $('room-send').onsubmit=sendMessage;
+    await loadMessages();
+    roomChannel=sb.channel('room-updates-'+me.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},payload=>{
+      if(payload.new.sender_id!==me.id){notifyMessage(payload.new); if(activeRoom && payload.new.group_id===activeRoom.id) loadMessages();}
+    }).subscribe();
+  }
+  async function loadMessages(){
+    if(!activeRoom)return;
+    const {data,error}=await sb.from('group_messages').select('id,group_id,sender_id,body,message_type,attachment_path,created_at,profiles(full_name,avatar_url)').eq('group_id',activeRoom.id).order('created_at',{ascending:true}).limit(200);
+    const el=$('room-messages'); if(!el)return;
+    if(error){el.innerHTML=`<p class="text-sm text-red-300">${esc(error.message)}</p>`;return;}
+    messageRows=data||[];
+    const rendered=await Promise.all(messageRows.map(async m=>{
+      let attachment='';
+      if(m.attachment_path){const {data:signed}=await sb.storage.from(ROOM_BUCKET).createSignedUrl(m.attachment_path,3600); if(signed?.signedUrl){const url=esc(signed.signedUrl);attachment=m.message_type==='image'?`<a href="${url}" target="_blank" rel="noopener"><img src="${url}" class="max-w-full max-h-64 rounded-xl mt-2" alt="attached image"></a>`:`<a href="${url}" target="_blank" rel="noopener" class="text-sky-300 underline block mt-2">📄 ເປີດໄຟລ໌ PDF</a>`;}}
+      const who=m.profiles?.full_name|| (m.sender_id===me.id?profile.full_name:'ສະມາຊິກ');
+      const announcement=m.message_type==='announcement';
+      return `<div class="flex gap-2 ${m.sender_id===me.id?'flex-row-reverse':''}"><div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">${m.profiles?.avatar_url?`<img src="${esc(m.profiles.avatar_url)}" class="w-full h-full object-cover">`:esc(initials(who))}</div><div class="max-w-[82%]"><div class="text-[11px] text-slate-400 ${m.sender_id===me.id?'text-right':''}">${esc(who)} · ${fmtTime(m.created_at)}</div><div class="rounded-2xl px-3 py-2 mt-1 ${announcement?'bg-orange-900/50 border border-orange-500/40':'bg-slate-800'}">${announcement?'<b class="text-orange-300">📢 ປະກາດ</b><br>':''}${esc(m.body||'').replace(/\n/g,'<br>')}${attachment}</div></div></div>`;
+    }));
+    el.innerHTML=rendered.join('')||'<p class="text-sm text-slate-400 text-center py-5">ຍັງບໍ່ມີຂໍ້ຄວາມ</p>';
+    el.scrollTop=el.scrollHeight;
+  }
+  async function sendMessage(ev){
+    ev.preventDefault(); if(!activeRoom||roomBusy)return;
+    const body=$('room-text').value.trim(), file=$('room-file').files[0]; if(!body&&!file)return;
+    roomBusy=true; let path=null, type='text';
+    try{
+      if(file){
+        if(file.size>10*1024*1024)throw new Error('ຂະໜາດໄຟລ໌ຕ້ອງບໍ່ເກີນ 10 MB');
+        if(!(file.type.startsWith('image/')||file.type==='application/pdf'))throw new Error('ຮອງຮັບສະເພາະຮູບພາບ ແລະ PDF');
+        const safe=file.name.replace(/[^\w.\-ก-๙]/g,'_').slice(-90), key=activeRoom.id+'/'+me.id+'/'+Date.now()+'_'+safe;
+        const {error:upErr}=await sb.storage.from(ROOM_BUCKET).upload(key,file,{upsert:false,contentType:file.type}); if(upErr)throw upErr;
+        path=key; type=file.type==='application/pdf'?'pdf':'image';
+      }
+      const {error}=await sb.from('group_messages').insert({group_id:activeRoom.id,sender_id:me.id,body, message_type:type,attachment_path:path});
+      if(error)throw error;
+      $('room-text').value=''; $('room-file').value=''; await loadMessages();
+    }catch(e){showToast('ສົ່ງບໍ່ສຳເລັດ: '+e.message);}
+    finally{roomBusy=false;}
+  }
+  async function announce(){
+    if(!activeRoom||!['teacher','admin'].includes(profile.role))return;
+    const body=prompt('ຂໍ້ຄວາມປະກາດ:'); if(!body||!body.trim())return;
+    const {error}=await sb.from('group_messages').insert({group_id:activeRoom.id,sender_id:me.id,body:body.trim(),message_type:'announcement'});
+    if(error)showToast('ປະກາດບໍ່ສຳເລັດ: '+error.message); else await loadMessages();
+  }
+  function notifyMessage(m){
+    const note='ມີຂໍ້ຄວາມໃໝ່ໃນ '+(activeRoom?.name||'ຫ້ອງຮຽນ');
+    if(typeof Notification!=='undefined'&&Notification.permission==='granted'&&document.hidden){try{new Notification('Bounma AI',{body:note,icon:LOGO});}catch(_){}}
+    if(typeof showToast==='function')showToast(note);
+  }
+  async function requestRoomNotifications(){if(typeof Notification!=='undefined'&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(_){}}}
+  const _switchTabForRooms=switchTab;
+  switchTab=function(t){_switchTabForRooms(t); if(t==='classroom'){requestRoomNotifications();loadClassroom();}};
+
   // ================= Cloud progress sync (merge, never lose local) =================
   const _sp = saveProgress;
   saveProgress = function (d) { _sp(d); if (!me || !profile || profile.status !== 'approved') return; clearTimeout(pushTimer); pushTimer = setTimeout(push, 800); };
@@ -292,7 +439,7 @@
     renderProgress();
   }
 
-  window.BAuth = { mode: showAuth, submit, logout, refresh, upd, toggle, reload: loadAdmin, filter: f => { adminFilter = f; renderAdminList(); }, search: v => { adminQ = v; renderAdminList(); } };
+  window.BAuth = { mode: showAuth, submit, logout, refresh, upd, toggle, openRoom, announce, reload: loadAdmin, filter: f => { adminFilter = f; renderAdminList(); }, search: v => { adminQ = v; renderAdminList(); } };
   gate('<p class="text-sm text-slate-400"><span class="spin"></span>ກຳລັງໂຫຼດ...</p>');
   sb.auth.onAuthStateChange((ev, session) => {
     if (ev === 'TOKEN_REFRESHED') return;

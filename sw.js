@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bounma-ai-v3-shell-v5';
+const CACHE_NAME = 'bounma-ai-v3-shell-v6';
 const APP_SHELL = ['./', './index.html', './manifest.json', './config.js', './auth.js', './assets/bounma-mascot.png', './assets/bounma-mascot-128.png', './assets/bounma-mascot-192.png', './assets/bounma-mascot-512.png'];
 const EXTERNAL = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js', 'https://cdn.tailwindcss.com', 'https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700;800&display=swap'];
 const cacheable = res => res && (res.ok || res.type === 'opaque');
