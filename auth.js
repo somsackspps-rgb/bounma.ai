@@ -221,6 +221,7 @@
     }
     hideGate(); progressKey = GUEST + '_' + me.id; buildUI();
     try { await syncProgress(); } catch (e) { console.warn('progress sync failed', e); renderProgress(); }
+    try { await handlePendingJoin(); } catch (e) { console.warn('pending join failed', e); }
   }
   const refresh = async () => { try { const { data } = await sb.auth.getSession(); await onSession(data.session); } catch (e) { console.warn(e); } };
 
@@ -273,8 +274,10 @@
       <div class="flex flex-wrap items-center gap-2"><span class="chip">${ST[u.status] || esc(u.status)}</span>
       <select aria-label="ບົດບາດ" ${self || updating ? 'disabled' : ''} onchange="BAuth.upd('${esc(u.id)}',{role:this.value})" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">${['student', 'teacher', 'admin'].map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${RL[r]}</option>`).join('')}</select>
       ${u.status !== 'approved' ? `<button ${updating ? 'disabled' : ''} onclick="BAuth.upd('${esc(u.id)}',{status:'approved'})" class="bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold">ອະນຸມັດ</button>` : ''}
-      ${u.status !== 'rejected' && !self ? `<button ${updating ? 'disabled' : ''} onclick="BAuth.upd('${esc(u.id)}',{status:'rejected'})" class="bg-red-900/70 px-3 py-1.5 rounded-lg text-xs">ປະຕິເສດ</button>` : ''}</div></div>`; }).join('')
+      ${u.status !== 'rejected' && !self ? `<button ${updating ? 'disabled' : ''} onclick="BAuth.upd('${esc(u.id)}',{status:'rejected'})" class="bg-red-900/70 px-3 py-1.5 rounded-lg text-xs">ປະຕິເສດ</button>` : ''}
+      ${!self ? `<button ${updating ? 'disabled' : ''} data-del-user="${esc(u.id)}" class="bg-slate-800 border border-red-500/50 text-red-300 hover:bg-red-900/60 px-3 py-1.5 rounded-lg text-xs" aria-label="ລຶບຜູ້ໃຊ້">🗑 ລຶບ</button>` : ''}</div></div>`; }).join('')
       : '<p class="text-sm text-slate-400 py-6 text-center">ບໍ່ມີລາຍການ</p>';
+    list.querySelectorAll('[data-del-user]').forEach(b => b.onclick = () => delUser(b.getAttribute('data-del-user')));
   }
   async function upd(id, patch) {
     if (updating || !me || id === me.id) { renderAdminList(); return; }
@@ -287,6 +290,27 @@
     if (res.error) showToast('ບໍ່ສຳເລັດ: ' + (isNet(res.error) ? 'ເຊື່ອມຕໍ່ບໍ່ໄດ້' : res.error.message));
     else if (!res.data || !res.data.length) showToast('ບໍ່ສຳເລັດ: ບໍ່ມີສິດແກ້ໄຂ (ກວດ RLS / ຣັນ supabase_setup.sql)');
     else { Object.assign(u, res.data[0]); showToast('ບັນທຶກແລ້ວ'); }
+    renderAdminList();
+  }
+
+  // Permanent delete needs the service role, so it runs in the Supabase Edge Function "delete-user" (see README).
+  async function delUser(id) {
+    if (updating || !me || id === me.id) return;
+    const u = adminData.find(x => x.id === id); if (!u) return;
+    const typed = prompt('⚠️ ລຶບຜູ້ໃຊ້ຖາວອນ: ' + (u.email || '') + '\n\n• ບັນຊີເຂົ້າລະບົບ, ຄວາມຄືບໜ້າ ແລະຂໍ້ຄວາມຂອງຜູ້ນີ້ຈະຖືກລຶບ\n• ຫ້ອງຮຽນທີ່ຜູ້ນີ້ສ້າງຈະຖືກໂອນໃຫ້ທ່ານ\n• ກູ້ຄືນບໍ່ໄດ້\n\nພິມອີເມວຂອງຜູ້ໃຊ້ເພື່ອຢືນຢັນ:');
+    if (typed === null) return;
+    if (typed.trim().toLowerCase() !== String(u.email || '').toLowerCase()) { showToast('ອີເມວບໍ່ກົງກັນ — ຍົກເລີກ'); return; }
+    updating = true; renderAdminList();
+    let res; try { res = await sb.functions.invoke('delete-user', { body: { user_id: id } }); } catch (e) { res = { error: e }; }
+    updating = false;
+    if (res.error) {
+      let msg = res.error.message || '';
+      try { const b = await res.error.context.json(); if (b && b.error) msg = b.error; } catch (_) {}
+      if (/Failed to send|relay|not found|404|FunctionsFetchError/i.test(msg)) msg = 'ຍັງບໍ່ໄດ້ deploy Edge Function “delete-user” (ເບິ່ງ README ຂັ້ນຕອນທີ 3)';
+      showToast('ລຶບບໍ່ສຳເລັດ: ' + msg); renderAdminList(); return;
+    }
+    adminData = adminData.filter(x => x.id !== id);
+    const t = res.data && res.data.transferred_rooms; showToast('ລຶບຜູ້ໃຊ້ແລ້ວ' + (t ? ' • ໂອນ ' + t + ' ຫ້ອງຮຽນໃຫ້ທ່ານ' : ''));
     renderAdminList();
   }
 
@@ -328,6 +352,8 @@
     if(canTeach) $('room-create').onsubmit=createRoom;
     $('room-join').onsubmit=joinRoom;
     renderRoomList();
+    const keep=pendingOpen||(activeRoom&&activeRoom.id); pendingOpen=null; // keep the open room when the tab is re-entered / reloaded
+    if(keep&&roomRows.some(x=>x.id===keep)) openRoom(keep); else activeRoom=null;
   }
   async function uploadAvatar(ev){
     ev.preventDefault(); const file=$('avatar-file').files[0]; if(!file)return showToast('ກະລຸນາເລືອກຮູບກ່ອນ');
@@ -362,57 +388,188 @@
     const el=$('room-list'); if(!el)return;
     el.innerHTML=roomRows.length?roomRows.map(r=>`<button type="button" onclick="BAuth.openRoom('${r.id}')" class="app-card rounded-2xl p-4 text-left hover:border-orange-500/50 border border-slate-700"><div class="font-bold">${esc(r.name)}</div><p class="text-xs text-slate-400 mt-1">${esc(r.description||'ບໍ່ມີລາຍລະອຽດ')}</p>${profile.role!=='student'?`<p class="text-xs text-orange-300 mt-2">ລະຫັດເຊີນ: <b>${esc(r.join_code||'')}</b></p>`:''}</button>`).join(''):'<p class="text-sm text-slate-400">ທ່ານຍັງບໍ່ມີກຸ່ມຮຽນ</p>';
   }
-  async function openRoom(id){
-    const r=roomRows.find(x=>x.id===id); if(!r)return;
-    activeRoom=r; messageRows=[];
-    if(roomChannel){await sb.removeChannel(roomChannel);roomChannel=null;}
-    const chat=$('room-chat'); if(!chat)return;
-    chat.innerHTML=`<div class="app-card rounded-2xl p-4 space-y-3"><div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-bold text-lg">${esc(r.name)}</h3><p class="text-xs text-slate-400">${esc(r.description||'')}</p></div>${profile.role!=='student'?`<button onclick="BAuth.announce()" class="chip">📢 ປະກາດ</button>`:''}</div><div id="room-messages" class="space-y-3 max-h-[55vh] overflow-y-auto p-2 bg-slate-950/50 rounded-xl"><p class="text-sm text-slate-400">ກຳລັງໂຫຼດຂໍ້ຄວາມ...</p></div><form id="room-send" class="space-y-2"><textarea id="room-text" class="${IN}" rows="2" maxlength="4000" placeholder="ພິມຂໍ້ຄວາມ..." ></textarea><div class="flex flex-wrap items-center justify-between gap-2"><label class="text-xs text-slate-400">ແນບຮູບພາບ / PDF <input id="room-file" type="file" accept="image/*,application/pdf" class="block text-xs mt-1"></label><button class="bg-emerald-700 rounded-xl px-5 py-2 text-sm font-bold">ສົ່ງ</button></div></form></div>`;
-    $('room-send').onsubmit=sendMessage;
-    await loadMessages();
-    roomChannel=sb.channel('room-updates-'+me.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},payload=>{
-      if(payload.new.sender_id!==me.id){notifyMessage(payload.new); if(activeRoom && payload.new.group_id===activeRoom.id) loadMessages();}
+  // ----- v3.4: room helpers (rename, share link, members, local attachments, paging) -----
+  const PAGE = 50, MSG_SEL = 'id,group_id,sender_id,body,message_type,attachment_path,created_at,profiles(full_name,avatar_url)';
+  const PEND_KEY = 'bounma_pending_join';
+  let members = [], hasOlder = false, pendingOpen = null;
+  const isStaff = () => !!profile && ['teacher', 'admin'].includes(profile.role);
+  const isAdminU = () => !!profile && profile.role === 'admin';
+  const canRename = r => !!r && (isAdminU() || r.created_by === (me && me.id));
+  const safeUrl = u => { try { const x = new URL(u); return x.protocol === 'https:' ? x.href : ''; } catch (_) { return ''; } };
+  const fsize = n => (window.BFiles ? BFiles.fmtSize(n) : Math.round(n / 1024) + ' KB');
+  const roomLink = r => { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('join', r.join_code); return u.toString(); };
+  // a shared link ?join=CODE is remembered, so it still works after login / sign-up / admin approval
+  (function captureJoin() {
+    try {
+      const u = new URL(location.href), j = (u.searchParams.get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+      if (!j) return;
+      localStorage.setItem(PEND_KEY, JSON.stringify({ code: j, t: Date.now() }));
+      u.searchParams.delete('join'); history.replaceState(null, '', u.pathname + u.search + u.hash);
+    } catch (_) {}
+  })();
+  async function handlePendingJoin() {
+    let p = null; try { p = JSON.parse(localStorage.getItem(PEND_KEY)); } catch (_) {}
+    if (!p || !p.code) return;
+    try { localStorage.removeItem(PEND_KEY); } catch (_) {}
+    if (Date.now() - p.t > 7 * 864e5) return;
+    const { data, error } = await sb.rpc('join_classroom_by_code', { p_code: p.code });
+    if (error) { showToast('ເຂົ້າຫ້ອງຕາມລິ້ງບໍ່ໄດ້: ' + (/invalid/i.test(error.message) ? 'ລະຫັດຫ້ອງບໍ່ຖືກຕ້ອງ' : error.message)); return; }
+    pendingOpen = data || null; switchTab('classroom'); showToast('ເຂົ້າຮ່ວມຫ້ອງຮຽນແລ້ວ');
+  }
+  function roomHead() {
+    const r = activeRoom; if (!r) return '';
+    const btn = (act, t) => `<button type="button" onclick="BAuth.${act}()" class="chip">${t}</button>`;
+    return `<div class="flex flex-wrap justify-between gap-2"><div class="min-w-0"><h3 class="font-bold text-lg break-words">${esc(r.name)}</h3><p class="text-xs text-slate-400">${esc(r.description || '')}</p></div><div class="flex flex-wrap gap-2 items-start">${btn('members', '👥 ສະມາຊິກ')}${isStaff() ? btn('share', '🔗 ແບ່ງປັນລິ້ງ') : ''}${canRename(r) ? btn('rename', '✏️ ແກ້ຊື່') : ''}${isStaff() ? btn('announce', '📢 ປະກາດ') : ''}</div></div>`;
+  }
+  async function renameRoom() {
+    const r = activeRoom; if (!r || !canRename(r)) return;
+    const name = (prompt('ຊື່ຫ້ອງຮຽນໃໝ່:', r.name) || '').trim(); if (!name) return;
+    if (name.length > 80) return showToast('ຊື່ຍາວເກີນ 80 ຕົວອັກສອນ');
+    const d = prompt('ຄຳອະທິບາຍຫ້ອງ (ປ່ອຍວ່າງ = ບໍ່ປ່ຽນ):', r.description || ''); const description = d === null ? r.description : d.trim().slice(0, 300);
+    if (name === r.name && description === r.description) return;
+    const { data, error } = await sb.from('classroom_groups').update({ name, description }).eq('id', r.id).select('id,name,description');
+    if (error) return showToast('ແກ້ຊື່ບໍ່ສຳເລັດ: ' + error.message);
+    if (!data || !data.length) return showToast('ບໍ່ມີສິດແກ້ໄຂຫ້ອງນີ້');
+    r.name = data[0].name; r.description = data[0].description; renderRoomList(); const h = $('room-head'); if (h) h.innerHTML = roomHead(); showToast('ແກ້ຊື່ຫ້ອງແລ້ວ');
+  }
+  async function shareRoom() {
+    const r = activeRoom; if (!r || !isStaff() || !r.join_code) return;
+    const url = roomLink(r), text = 'ເຂົ້າຮ່ວມຫ້ອງຮຽນ “' + r.name + '” ໃນບຸນມາ AI';
+    if (navigator.share) { try { await navigator.share({ title: r.name, text, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+    if (typeof copyText === 'function') copyText(text + '\n' + url); else showToast(url);
+  }
+  const canRemoveMember = m => !!m && me && m.user_id !== me.id && (m.role === 'student' ? isStaff() : isAdminU());
+  async function toggleMembers() {
+    const r = activeRoom, box = $('room-members'); if (!r || !box) return;
+    if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden'); box.innerHTML = '<p class="text-sm text-slate-400"><span class="spin"></span> ກຳລັງໂຫຼດສະມາຊິກ...</p>';
+    const { data, error } = await sb.rpc('list_group_members', { p_group: r.id });
+    if (error) { box.innerHTML = `<p class="text-sm text-red-300">${esc(error.message)} — ກວດວ່າໄດ້ຣັນ SQL v3.4 ແລ້ວ</p>`; return; }
+    members = data || []; renderMembers();
+  }
+  function renderMembers() {
+    const box = $('room-members'); if (!box) return;
+    const ord = { admin: 0, teacher: 1, student: 2 };
+    const rows = [...members].sort((a, b) => ((ord[a.role] ?? 3) - (ord[b.role] ?? 3)) || String(a.full_name || '').localeCompare(String(b.full_name || '')));
+    box.innerHTML = `<div class="flex items-center justify-between"><h4 class="font-bold text-sm">👥 ສະມາຊິກ ${rows.length} ຄົນ</h4><button type="button" onclick="BAuth.members()" class="text-xs text-slate-400">ປິດ</button></div><div class="space-y-2 max-h-64 overflow-y-auto">` +
+      rows.map(m => `<div class="flex items-center gap-2 bg-slate-900/60 rounded-xl p-2"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">${m.avatar_url ? `<img src="${esc(m.avatar_url)}" alt="" class="w-full h-full object-cover">` : esc(initials(m.full_name))}</div><div class="min-w-0 flex-1"><p class="text-sm font-bold truncate">${esc(m.full_name || '-')}${me && m.user_id === me.id ? ' (ຂ້ອຍ)' : ''}</p><p class="text-[11px] text-slate-400 truncate">${esc(RL[m.role] || '')}${m.email ? ' • ' + esc(m.email) : ''}</p></div>${canRemoveMember(m) ? `<button type="button" data-rm="${esc(m.user_id)}" class="bg-red-900/70 hover:bg-red-800 rounded-lg px-2.5 py-1.5 text-xs">ເອົາອອກ</button>` : ''}</div>`).join('') + '</div>';
+    box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => removeMember(b.getAttribute('data-rm')));
+  }
+  async function removeMember(uid) {
+    const m = members.find(x => x.user_id === uid), r = activeRoom; if (!m || !r || !canRemoveMember(m)) return;
+    if (!confirm('ເອົາ ' + (m.full_name || m.email || 'ຜູ້ໃຊ້') + ' ອອກຈາກຫ້ອງ “' + r.name + '” ?')) return;
+    const { error } = await sb.rpc('remove_group_member', { p_group: r.id, p_user: uid });
+    if (error) return showToast('ບໍ່ສຳເລັດ: ' + error.message);
+    if (m.user_id === r.created_by) r.created_by = me.id; // server moved ownership to the admin
+    members = members.filter(x => x.user_id !== uid); renderMembers(); showToast('ເອົາອອກຈາກຫ້ອງແລ້ວ');
+  }
+  let openSeq = 0;
+  async function openRoom(id) {
+    const r = roomRows.find(x => x.id === id); if (!r) return;
+    const my = ++openSeq; activeRoom = r; messageRows = []; members = [];
+    if (roomChannel) { const old = roomChannel; roomChannel = null; try { await sb.removeChannel(old); } catch (_) {} }
+    const chat = $('room-chat'); if (!chat || my !== openSeq) return;
+    chat.innerHTML = `<div class="app-card rounded-2xl p-4 space-y-3"><div id="room-head">${roomHead()}</div><div id="room-members" class="hidden bg-slate-950/50 rounded-xl p-3 space-y-2"></div>` +
+      `<div id="room-messages" class="space-y-3 max-h-[55vh] overflow-y-auto p-2 bg-slate-950/50 rounded-xl"><p class="text-sm text-slate-400">ກຳລັງໂຫຼດຂໍ້ຄວາມ...</p></div>` +
+      `<form id="room-send" class="space-y-2"><textarea id="room-text" class="${IN}" rows="2" maxlength="4000" placeholder="ພິມຂໍ້ຄວາມ..."></textarea>` +
+      `<div class="grid sm:grid-cols-2 gap-2"><label class="text-xs text-slate-400">📎 ແນບໄຟລ໌ (ເກັບໃນເຄື່ອງທ່ານເທົ່ານັ້ນ ≤ 50 MB)<input id="room-file" type="file" class="block text-xs mt-1 w-full"></label><label class="text-xs text-slate-400">🔗 ແນບລິ້ງ (Google Drive ... ໃຫ້ເພື່ອນເປີດໄດ້)<input id="room-link" type="text" inputmode="url" autocapitalize="none" autocomplete="off" maxlength="500" placeholder="https://..." class="${IN} !py-2 mt-1"></label></div>` +
+      `<p class="text-[11px] text-slate-500">ໄຟລ໌ແນບບໍ່ຖືກອັບໂຫຼດຂຶ້ນເຊີບເວີ — ສະມາຊິກຄົນອື່ນຈະເຫັນແຕ່ຊື່ໄຟລ໌. ຖ້າຢາກໃຫ້ເພື່ອນເປີດໄດ້ ໃຫ້ແປະລິ້ງ Drive.</p>` +
+      `<div class="flex justify-end"><button id="room-send-btn" class="bg-emerald-700 hover:bg-emerald-600 rounded-xl px-5 py-2 text-sm font-bold">ສົ່ງ</button></div></form></div>`;
+    $('room-send').onsubmit = sendMessage;
+    $('room-messages').onclick = onMessageClick;
+    await loadMessages('latest');
+    if (my !== openSeq) return;
+    roomChannel = sb.channel('room-updates-' + me.id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages' }, payload => {
+      if (payload.new.sender_id !== me.id) { notifyMessage(payload.new); if (activeRoom && payload.new.group_id === activeRoom.id) loadMessages('new'); }
     }).subscribe();
   }
-  async function loadMessages(){
-    if(!activeRoom)return;
-    const {data,error}=await sb.from('group_messages').select('id,group_id,sender_id,body,message_type,attachment_path,created_at,profiles(full_name,avatar_url)').eq('group_id',activeRoom.id).order('created_at',{ascending:true}).limit(200);
-    const el=$('room-messages'); if(!el)return;
-    if(error){el.innerHTML=`<p class="text-sm text-red-300">${esc(error.message)}</p>`;return;}
-    messageRows=data||[];
-    const rendered=await Promise.all(messageRows.map(async m=>{
-      let attachment='';
-      if(m.attachment_path){const {data:signed}=await sb.storage.from(ROOM_BUCKET).createSignedUrl(m.attachment_path,3600); if(signed?.signedUrl){const url=esc(signed.signedUrl);attachment=m.message_type==='image'?`<a href="${url}" target="_blank" rel="noopener"><img src="${url}" class="max-w-full max-h-64 rounded-xl mt-2" alt="attached image"></a>`:`<a href="${url}" target="_blank" rel="noopener" class="text-sky-300 underline block mt-2">📄 ເປີດໄຟລ໌ PDF</a>`;}}
-      const who=m.profiles?.full_name|| (m.sender_id===me.id?profile.full_name:'ສະມາຊິກ');
-      const announcement=m.message_type==='announcement';
-      return `<div class="flex gap-2 ${m.sender_id===me.id?'flex-row-reverse':''}"><div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">${m.profiles?.avatar_url?`<img src="${esc(m.profiles.avatar_url)}" class="w-full h-full object-cover">`:esc(initials(who))}</div><div class="max-w-[82%]"><div class="text-[11px] text-slate-400 ${m.sender_id===me.id?'text-right':''}">${esc(who)} · ${fmtTime(m.created_at)}</div><div class="rounded-2xl px-3 py-2 mt-1 ${announcement?'bg-orange-900/50 border border-orange-500/40':'bg-slate-800'}">${announcement?'<b class="text-orange-300">📢 ປະກາດ</b><br>':''}${esc(m.body||'').replace(/\n/g,'<br>')}${attachment}</div></div></div>`;
-    }));
-    el.innerHTML=rendered.join('')||'<p class="text-sm text-slate-400 text-center py-5">ຍັງບໍ່ມີຂໍ້ຄວາມ</p>';
-    el.scrollTop=el.scrollHeight;
+  async function loadMessages(mode) {
+    if (!activeRoom) return; const gid = activeRoom.id;
+    let q = sb.from('group_messages').select(MSG_SEL).eq('group_id', gid);
+    if (mode === 'older' && messageRows.length) q = q.lt('created_at', messageRows[0].created_at).order('created_at', { ascending: false }).limit(PAGE);
+    else if (mode === 'new' && messageRows.length) q = q.gte('created_at', messageRows[messageRows.length - 1].created_at).order('created_at', { ascending: true }).limit(200);
+    else { mode = 'latest'; q = q.order('created_at', { ascending: false }).limit(PAGE); }
+    const { data, error } = await q;
+    if (!activeRoom || activeRoom.id !== gid) return;
+    const el = $('room-messages'); if (!el) return;
+    if (error) { el.innerHTML = `<p class="text-sm text-red-300">${esc(error.message)}</p>`; return; }
+    let rows = data || [];
+    if (mode === 'older') { rows = rows.reverse(); hasOlder = rows.length === PAGE; messageRows = rows.concat(messageRows); }
+    else if (mode === 'new') { const have = new Set(messageRows.map(m => m.id)); messageRows = messageRows.concat(rows.filter(m => !have.has(m.id))); }
+    else { rows = rows.reverse(); hasOlder = rows.length === PAGE; messageRows = rows; }
+    renderMessages(mode);
   }
-  async function sendMessage(ev){
-    ev.preventDefault(); if(!activeRoom||roomBusy)return;
-    const body=$('room-text').value.trim(), file=$('room-file').files[0]; if(!body&&!file)return;
-    roomBusy=true; let path=null, type='text';
-    try{
-      if(file){
-        if(file.size>10*1024*1024)throw new Error('ຂະໜາດໄຟລ໌ຕ້ອງບໍ່ເກີນ 10 MB');
-        if(!(file.type.startsWith('image/')||file.type==='application/pdf'))throw new Error('ຮອງຮັບສະເພາະຮູບພາບ ແລະ PDF');
-        const safe=file.name.replace(/[^\w.\-ก-๙]/g,'_').slice(-90), key=activeRoom.id+'/'+me.id+'/'+Date.now()+'_'+safe;
-        const {error:upErr}=await sb.storage.from(ROOM_BUCKET).upload(key,file,{upsert:false,contentType:file.type}); if(upErr)throw upErr;
-        path=key; type=file.type==='application/pdf'?'pdf':'image';
+  function attachHtml(m) {
+    const p = m.attachment_path; if (!p) return '';
+    const lf = window.BFiles ? BFiles.parse(p) : null;
+    if (lf) return `<div class="mt-2 rounded-xl bg-slate-900/70 border border-slate-700 p-2 text-xs" data-lf="${esc(lf.id)}"><div class="font-bold break-all">📎 ${esc(lf.name)}</div><div class="text-slate-400">${esc(fsize(lf.size))} • <span class="lf-state">ກຳລັງກວດ...</span></div><div class="lf-actions hidden gap-2 mt-1"><button type="button" class="chip" data-act="open-local" data-id="${esc(lf.id)}">ເປີດ</button><button type="button" class="chip" data-act="save-local" data-id="${esc(lf.id)}">ບັນທຶກ</button></div></div>`;
+    if (m.message_type === 'link') { const u = safeUrl(p); let host = ''; try { host = new URL(u).hostname; } catch (_) {} return u ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow" class="text-sky-300 underline block mt-2 break-all">🔗 ${esc(host)} — ເປີດລິ້ງ</a>` : ''; }
+    return `<button type="button" class="chip mt-2" data-act="open-legacy" data-path="${esc(p)}">📎 ເປີດໄຟລ໌ແນບ (ເກົ່າ)</button>`;
+  }
+  function msgHtml(m) {
+    const mine = me && m.sender_id === me.id, who = (m.profiles && m.profiles.full_name) || (mine ? profile.full_name : 'ສະມາຊິກ'), ann = m.message_type === 'announcement', av = m.profiles && m.profiles.avatar_url;
+    return `<div class="flex gap-2 ${mine ? 'flex-row-reverse' : ''}"><div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">${av ? `<img src="${esc(av)}" alt="" class="w-full h-full object-cover">` : esc(initials(who))}</div><div class="max-w-[82%] min-w-0"><div class="text-[11px] text-slate-400 ${mine ? 'text-right' : ''}">${esc(who)} · ${fmtTime(m.created_at)}</div><div class="rounded-2xl px-3 py-2 mt-1 break-words ${ann ? 'bg-orange-900/50 border border-orange-500/40' : 'bg-slate-800'}">${ann ? '<b class="text-orange-300">📢 ປະກາດ</b><br>' : ''}${esc(m.body || '').replace(/\n/g, '<br>')}${attachHtml(m)}</div></div></div>`;
+  }
+  function renderMessages(mode) {
+    const el = $('room-messages'); if (!el) return;
+    const prevH = el.scrollHeight, nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    el.innerHTML = (hasOlder ? '<div class="text-center"><button type="button" data-act="older" class="chip">⬆︎ ໂຫຼດຂໍ້ຄວາມກ່ອນໜ້າ</button></div>' : '') +
+      (messageRows.map(msgHtml).join('') || '<p class="text-sm text-slate-400 text-center py-5">ຍັງບໍ່ມີຂໍ້ຄວາມ</p>');
+    if (mode === 'older') el.scrollTop = el.scrollHeight - prevH; else if (mode === 'latest' || nearBottom) el.scrollTop = el.scrollHeight;
+    hydrateLocal();
+  }
+  async function hydrateLocal() {
+    const nodes = document.querySelectorAll('#room-messages [data-lf]');
+    for (const n of nodes) {
+      const ok = window.BFiles ? await BFiles.has(n.getAttribute('data-lf')) : false;
+      const s = n.querySelector('.lf-state'), a = n.querySelector('.lf-actions');
+      if (s) s.textContent = ok ? 'ໄຟລ໌ຢູ່ໃນເຄື່ອງນີ້' : 'ໄຟລ໌ຢູ່ໃນເຄື່ອງຜູ້ສົ່ງ — ເຄື່ອງນີ້ເປີດບໍ່ໄດ້';
+      if (a) { a.classList.toggle('hidden', !ok); a.classList.toggle('flex', ok); }
+    }
+  }
+  async function onMessageClick(ev) {
+    const b = ev.target.closest('[data-act]'); if (!b) return;
+    const act = b.getAttribute('data-act');
+    try {
+      if (act === 'older') { b.disabled = true; await loadMessages('older'); }
+      else if (act === 'open-local') { if (!(await BFiles.view(b.getAttribute('data-id')))) showToast('ບໍ່ພົບໄຟລ໌ໃນເຄື່ອງນີ້'); }
+      else if (act === 'save-local') { if (!(await BFiles.download(b.getAttribute('data-id')))) showToast('ບໍ່ພົບໄຟລ໌ໃນເຄື່ອງນີ້'); }
+      else if (act === 'open-legacy') {
+        const w = window.open('about:blank', '_blank'); const { data, error } = await sb.storage.from(ROOM_BUCKET).createSignedUrl(b.getAttribute('data-path'), 3600);
+        if (error || !data || !data.signedUrl) { if (w) w.close(); showToast('ເປີດໄຟລ໌ບໍ່ໄດ້'); } else if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
       }
-      const {error}=await sb.from('group_messages').insert({group_id:activeRoom.id,sender_id:me.id,body, message_type:type,attachment_path:path});
-      if(error)throw error;
-      $('room-text').value=''; $('room-file').value=''; await loadMessages();
-    }catch(e){showToast('ສົ່ງບໍ່ສຳເລັດ: '+e.message);}
-    finally{roomBusy=false;}
+    } catch (e) { showToast('ບໍ່ສຳເລັດ: ' + (e.message || e)); }
+  }
+  async function sendMessage(ev) {
+    ev.preventDefault(); if (!activeRoom || roomBusy) return;
+    const body = $('room-text').value.trim(), file = $('room-file').files[0], linkRaw = ($('room-link').value || '').trim();
+    if (!body && !file && !linkRaw) return;
+    let link = '';
+    if (linkRaw) { link = safeUrl(/^[a-z]+:\/\//i.test(linkRaw) ? linkRaw : 'https://' + linkRaw); if (!link) return showToast('ລິ້ງຕ້ອງເປັນ https://'); if (link.length > 500) return showToast('ລິ້ງຍາວເກີນ 500 ຕົວອັກສອນ'); }
+    roomBusy = true; const btn = $('room-send-btn'); if (btn) btn.disabled = true; let savedId = null, sent = false;
+    try {
+      const base = { group_id: activeRoom.id, sender_id: me.id }, rows = [];
+      if (file) {
+        if (!window.BFiles || !BFiles.supported) throw new Error('ເບົາເຊີນີ້ບໍ່ຮອງຮັບການເກັບໄຟລ໌ໃນເຄື່ອງ');
+        if (file.size > BFiles.MAX) throw new Error('ໄຟລ໌ໃຫຍ່ເກີນ ' + fsize(BFiles.MAX));
+        savedId = await BFiles.put(activeRoom.id, file);
+        rows.push({ ...base, body, message_type: 'file', attachment_path: BFiles.mark(savedId, file) });
+        if (link) rows.push({ ...base, body: '', message_type: 'link', attachment_path: link });
+      } else if (link) rows.push({ ...base, body, message_type: 'link', attachment_path: link });
+      else rows.push({ ...base, body, message_type: 'text', attachment_path: null });
+      for (const row of rows) { const { error } = await sb.from('group_messages').insert(row); if (error) throw error; sent = true; }
+      if (savedId && window.BFiles) BFiles.persist();
+      $('room-text').value = ''; $('room-file').value = ''; $('room-link').value = ''; await loadMessages('new');
+    } catch (e) {
+      if (savedId && !sent && window.BFiles) { try { await BFiles.remove(savedId); } catch (_) {} }
+      showToast('ສົ່ງບໍ່ສຳເລັດ: ' + (e.message || e));
+    } finally { roomBusy = false; if (btn) btn.disabled = false; }
   }
   async function announce(){
     if(!activeRoom||!['teacher','admin'].includes(profile.role))return;
     const body=prompt('ຂໍ້ຄວາມປະກາດ:'); if(!body||!body.trim())return;
     const {error}=await sb.from('group_messages').insert({group_id:activeRoom.id,sender_id:me.id,body:body.trim(),message_type:'announcement'});
-    if(error)showToast('ປະກາດບໍ່ສຳເລັດ: '+error.message); else await loadMessages();
+    if(error)showToast('ປະກາດບໍ່ສຳເລັດ: '+error.message); else await loadMessages('new');
   }
   function notifyMessage(m){
     const note='ມີຂໍ້ຄວາມໃໝ່ໃນ '+(activeRoom?.name||'ຫ້ອງຮຽນ');
@@ -439,7 +596,7 @@
     renderProgress();
   }
 
-  window.BAuth = { mode: showAuth, submit, logout, refresh, upd, toggle, openRoom, announce, reload: loadAdmin, filter: f => { adminFilter = f; renderAdminList(); }, search: v => { adminQ = v; renderAdminList(); } };
+  window.BAuth = { mode: showAuth, submit, logout, refresh, upd, toggle, openRoom, announce, del: delUser, members: toggleMembers, share: shareRoom, rename: renameRoom, reload: loadAdmin, filter: f => { adminFilter = f; renderAdminList(); }, search: v => { adminQ = v; renderAdminList(); } };
   gate('<p class="text-sm text-slate-400"><span class="spin"></span>ກຳລັງໂຫຼດ...</p>');
   sb.auth.onAuthStateChange((ev, session) => {
     if (ev === 'TOKEN_REFRESHED') return;

@@ -1,15 +1,20 @@
-const CACHE_NAME = 'bounma-ai-v3-shell-v6';
-const APP_SHELL = ['./', './index.html', './manifest.json', './config.js', './auth.js', './assets/bounma-mascot.png', './assets/bounma-mascot-128.png', './assets/bounma-mascot-192.png', './assets/bounma-mascot-512.png'];
+// Bump VERSION on every release: a changed sw.js makes the app show "new version" to users.
+const VERSION = '3.4.0';
+const CACHE_NAME = 'bounma-ai-shell-' + VERSION;
+const APP_SHELL = ['./', './index.html', './manifest.json', './config.js', './auth.js', './js/pwa.js', './js/localfiles.js', './js/ai-apps.js', './js/prompt-presets.js', './assets/bounma-mascot.png', './assets/bounma-mascot-128.png', './assets/bounma-mascot-192.png', './assets/bounma-mascot-512.png'];
 const EXTERNAL = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js', 'https://cdn.tailwindcss.com', 'https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700;800&display=swap'];
 const cacheable = res => res && (res.ok || res.type === 'opaque');
-const store = (req, res) => { if (cacheable(res)) { const copy = res.clone(); caches.open(CACHE_NAME).then(c => c.put(req, copy)); } return res; };
+// navigations are cached under their bare path so ?join=CODE / ?code=... never pollute the cache
+const store = (req, res) => { if (cacheable(res)) { const copy = res.clone(); let key = req; if (req.mode === 'navigate') { const u = new URL(req.url); key = new Request(u.origin + u.pathname); } caches.open(CACHE_NAME).then(c => c.put(key, copy)); } return res; };
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(async cache => {
     await cache.addAll(APP_SHELL);
     // Best effort: external CSS/fonts/Tailwind are needed for offline styling
     await Promise.all(EXTERNAL.map(u => cache.add(new Request(u, { mode: 'no-cors' })).catch(() => {})));
-  }).then(() => self.skipWaiting()));
+  }));
 });
+// the page asks us to take over only after the user taps "update"
+self.addEventListener('message', e => { if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting(); });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });

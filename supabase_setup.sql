@@ -367,3 +367,83 @@ using (bucket_id='profile-avatars' and (storage.foldername(name))[1]=auth.uid():
 with check (bucket_id='profile-avatars' and (storage.foldername(name))[1]=auth.uid()::text);
 create policy profile_avatars_delete_own on storage.objects for delete to authenticated
 using (bucket_id='profile-avatars' and (storage.foldername(name))[1]=auth.uid()::text);
+
+
+-- =====================================================================
+-- Bounma AI v3.4: classroom upgrades (safe to re-run; does not delete data)
+--   * attachments stay on the user's device -> new message types 'file' / 'link'
+--   * list members, remove members (teacher->students, admin->teachers)
+--   * teachers/owners may only rename a room (name + description), nothing else
+-- =====================================================================
+
+-- 1) message types: 'file' = note that points to a file kept on the sender's device, 'link' = https link
+alter table public.group_messages drop constraint if exists group_messages_message_type_check;
+alter table public.group_messages add constraint group_messages_message_type_check
+  check (message_type in ('text','announcement','image','pdf','file','link'));
+alter table public.group_messages drop constraint if exists group_messages_attachment_shape_check;
+alter table public.group_messages add constraint group_messages_attachment_shape_check check (
+  (message_type = 'link' and attachment_path ~ '^https://[^[:space:]]+$' and char_length(attachment_path) <= 500)
+  or (message_type = 'file' and attachment_path ~ '^local:' and char_length(attachment_path) <= 400)
+  or message_type not in ('link','file')
+);
+
+-- 2) a room owner (non-admin) can change only name/description
+create or replace function public.guard_group_update() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  if auth.uid() is not null and not public.is_admin() then
+    if new.id is distinct from old.id or new.created_by is distinct from old.created_by
+       or new.join_code is distinct from old.join_code or new.created_at is distinct from old.created_at then
+      raise exception 'only the name and description of a classroom can be changed';
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists guard_group_update on public.classroom_groups;
+create trigger guard_group_update before update on public.classroom_groups
+  for each row execute function public.guard_group_update();
+
+-- 3) list members (email is returned to teachers/admins only)
+create or replace function public.list_group_members(p_group uuid)
+returns table(user_id uuid, full_name text, role text, avatar_url text, email text, joined_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if auth.uid() is null or not public.is_approved() then raise exception 'approved account required'; end if;
+  if not (public.is_group_member(p_group) or public.is_group_teacher(p_group)) then
+    raise exception 'not a member of this classroom';
+  end if;
+  return query
+    select gm.user_id, p.full_name, p.role, p.avatar_url,
+           case when public.is_staff() then p.email else null end, gm.joined_at
+    from public.group_members gm join public.profiles p on p.id = gm.user_id
+    where gm.group_id = p_group
+    order by gm.joined_at;
+end $$;
+revoke all on function public.list_group_members(uuid) from public;
+grant execute on function public.list_group_members(uuid) to authenticated;
+
+-- 4) remove a member: teacher/admin of the room -> students ; admin only -> teachers/admins
+create or replace function public.remove_group_member(p_group uuid, p_user uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_role text; v_owner uuid;
+begin
+  if auth.uid() is null or not public.is_approved() then raise exception 'approved account required'; end if;
+  if p_user = auth.uid() then raise exception 'you cannot remove yourself'; end if;
+  if not public.is_group_teacher(p_group) then raise exception 'only a teacher or admin of this classroom can remove members'; end if;
+  select pr.role into v_role from public.profiles pr where pr.id = p_user;
+  if v_role is null then raise exception 'user not found'; end if;
+  if v_role <> 'student' and not public.is_admin() then raise exception 'only an admin can remove a teacher'; end if;
+  if not exists (select 1 from public.group_members g where g.group_id = p_group and g.user_id = p_user) then
+    raise exception 'user is not a member of this classroom';
+  end if;
+  delete from public.group_members g where g.group_id = p_group and g.user_id = p_user;
+  select c.created_by into v_owner from public.classroom_groups c where c.id = p_group;
+  if p_user = v_owner then  -- removed the owner: the admin becomes owner so the room is never orphaned
+    update public.classroom_groups set created_by = auth.uid() where id = p_group;
+    insert into public.group_members(group_id, user_id) values (p_group, auth.uid()) on conflict do nothing;
+  end if;
+end $$;
+revoke all on function public.remove_group_member(uuid, uuid) from public;
+grant execute on function public.remove_group_member(uuid, uuid) to authenticated;
+
+select 'v3.4 classroom upgrade complete' as result;

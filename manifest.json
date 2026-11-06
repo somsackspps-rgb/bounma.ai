@@ -9,7 +9,47 @@
   "background_color": "#020617",
   "theme_color": "#f97316",
   "icons": [
-    { "src": "assets/bounma-mascot-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "assets/bounma-mascot-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    {
+      "src": "assets/bounma-mascot-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/bounma-mascot-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "id": "./",
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "orientation": "any",
+  "shortcuts": [
+    {
+      "name": "Prompt Builder",
+      "short_name": "Prompt",
+      "url": "./#builder",
+      "icons": [
+        {
+          "src": "assets/bounma-mascot-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "ຫ້ອງຮຽນ",
+      "short_name": "ຫ້ອງຮຽນ",
+      "url": "./#classroom",
+      "icons": [
+        {
+          "src": "assets/bounma-mascot-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

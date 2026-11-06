@@ -117,7 +117,7 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="font-extrabold text-lg md:text-xl tracking-tight text-white">ບຸນມາ AI</h1>
-                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v3.2</span>
+                        <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded-md border border-orange-500/30">v3.4</span>
                     </div>
                     <p class="text-xs text-slate-400">ລະບົບຮຽນຮູ້ & ເຄື່ອງມື Prompt ອັດສະລິຍະ</p>
                 </div>
@@ -477,26 +477,11 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
                         <span class="text-xs text-orange-400 font-normal">ເລືອກ Preset ດ້ານລຸ່ມ:</span>
                     </h3>
 
-                    <!-- Quick Presets -->
-                    <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                        <button onclick="applyPreset('image')" class="text-xs bg-slate-800 hover:bg-slate-700 text-orange-400 px-3 py-1.5 rounded-xl border border-slate-700 whitespace-nowrap flex items-center gap-1">
-                            🖼️ ການສ້າງຮູບພາບ AI
-                        </button>
-                        <button onclick="applyPreset('email')" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 px-3 py-1.5 rounded-xl border border-slate-700 whitespace-nowrap flex items-center gap-1">
-                            ✍️ ຂຽນອີເມວ & ເນື້ອຫາ
-                        </button>
-                        <button onclick="applyPreset('report')" class="text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 px-3 py-1.5 rounded-xl border border-slate-700 whitespace-nowrap flex items-center gap-1">
-                            📊 ສະຫຼຸບ & ວິເຄາະລາຍງານ
-                        </button>
-                        <button onclick="applyPreset('code')" class="text-xs bg-slate-800 hover:bg-slate-700 text-cyan-400 px-3 py-1.5 rounded-xl border border-slate-700 whitespace-nowrap flex items-center gap-1">
-                            💻 ຂຽນ & ແກ້ໄຂໂຄ້ດ (Coding)
-                        </button>
-                        <button onclick="applyPreset('english')" class="text-xs bg-slate-800 hover:bg-slate-700 text-purple-400 px-3 py-1.5 rounded-xl border border-slate-700 whitespace-nowrap flex items-center gap-1">
-                            🇬🇧 ຝຶກ & ແປພາສາອັງກິດ
-                        </button>
-                        <button onclick="applyPreset('sop')" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-400 px-3 py-1.5 rounded-xl border border-slate-700 whitespace-nowrap flex items-center gap-1">
-                            📋 ສ້າງ SOP & ຂັ້ນຕອນວຽກ
-                        </button>
+                    <!-- Preset gallery (v3.4) -->
+                    <div class="space-y-2">
+                        <input id="preset-search" type="search" placeholder="🔎 ຄົ້ນຫາ Preset ເຊັ່ນ ອີເມວ, ສອບ, SOP..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 text-xs focus:outline-none focus:border-orange-500" aria-label="ຄົ້ນຫາ Preset">
+                        <div id="preset-cats" class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar"></div>
+                        <div id="preset-list" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-56 overflow-y-auto custom-scrollbar pr-1"></div>
                     </div>
 
                     <div class="space-y-3 text-sm">
@@ -516,24 +501,46 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
                             <label class="block text-xs font-semibold text-emerald-400 mb-1">4. Format (ຮູບແບບຄຳຕອບ):</label>
                             <input type="text" id="builder-format" placeholder="ເຊັ່ນ: ຂຽນເປັນພາສາອັງກິດ Cinematic Lighting, 8K Resolution" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 text-xs focus:outline-none focus:border-orange-500 transition">
                         </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-400 mb-1" for="builder-constraints">5. Constraints (ຂໍ້ຈຳກັດ / ສິ່ງທີ່ຫ້າມ) — ບໍ່ບັງຄັບ:</label>
+                            <textarea id="builder-constraints" rows="2" placeholder="ເຊັ່ນ: ບໍ່ເກີນ 200 ຄຳ, ຫ້າມແຕ່ງຂໍ້ມູນ, ໃຊ້ພາສາງ່າຍ" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 text-xs focus:outline-none focus:border-orange-500 transition"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-400 mb-1" for="builder-lang">6. ພາສາທີ່ໃຫ້ AI ຕອບ:</label>
+                            <select id="builder-lang" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 text-xs focus:outline-none focus:border-orange-500">
+                                <option value="">ໃຫ້ AI ເລືອກເອງ (ຕາມພາສາທີ່ຖາມ)</option>
+                                <option value="ຕອບເປັນພາສາລາວ">ພາສາລາວ</option>
+                                <option value="ຕອບເປັນພາສາໄທ">ພາສາໄທ</option>
+                                <option value="Answer in English">English</option>
+                                <option value="ຕອບສອງພາສາ: ລາວ ແລະ English">ລາວ + English</option>
+                            </select>
+                        </div>
 
                         <!-- Image Style Extra Controls -->
-                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80 space-y-2">
+                        <div id="img-box" class="hidden bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80 space-y-2">
                             <label class="block text-xs font-semibold text-purple-400">🎨 ຕົວເລືອກເພີ່ມເຕີມສຳລັບການສ້າງຮູບພາບ (Optional Image Modifiers):</label>
                             <div class="grid grid-cols-2 gap-2 text-xs">
                                 <select id="img-style" onchange="updatePromptOutput()" class="bg-slate-900 border border-slate-700 text-slate-300 rounded-lg p-2 text-xs focus:outline-none">
-                                    <option value="">ເລືອກ Art Style...</option>
-                                    <option value="ຮູບກາຕູນ 3D ແບບໜ້າຮັກ">ກາຕູນ 3D ໜ້າຮັກ</option>
-                                    <option value="ຮູບແບບໄຊເບີພັງ ສົມຈິງ">Cyberpunk ອະນາຄົດ</option>
-                                    <option value="ຮູບພາບ Vector ແບບມິນິມອນ">Vector ມິນິມອນ</option>
-                                    <option value="ຮູບຖ່າຍສົມຈິງ ແສງສະຕູດິໂອ">ພາບສົມຈິງ</option>
-                                </select>
+<option value="">ເລືອກ Art Style...</option>
+<option value="ຮູບກາຕູນ 3D ແບບໜ້າຮັກ">ກາຕູນ 3D ໜ້າຮັກ</option>
+<option value="ຮູບແບບໄຊເບີພັງ ສົມຈິງ">Cyberpunk ອະນາຄົດ</option>
+<option value="ຮູບ Vector ແບບມິນິມອນ">Vector ມິນິມອນ</option>
+<option value="ຮູບຖ່າຍສົມຈິງ ແສງສະຕູດິໂອ">ພາບສົມຈິງ ແສງສະຕູດິໂອ</option>
+<option value="ສີນ້ຳ ນຸ່ມນວນ">ສີນ້ຳ (Watercolor)</option>
+<option value="ແບບການ໌ຕູນອະນິເມະ">ອະນິເມະ (Anime)</option>
+<option value="Isometric ສະອາດ ສີສົດ">Isometric</option>
+<option value="ພາບໂຮງໜັງ ແສງ Cinematic">Cinematic</option>
+<option value="ຮູບແຕ້ມດ້ວຍມື ເສັ້ນດິນສໍ">ເສັ້ນດິນສໍ (Sketch)</option>
+<option value="Flat Illustration ສີເຮັດໃຫ້ຮູ້ສຶກທັນສະໄໝ">Flat Illustration</option>
+</select>
                                 <select id="img-aspect" onchange="updatePromptOutput()" class="bg-slate-900 border border-slate-700 text-slate-300 rounded-lg p-2 text-xs focus:outline-none">
-                                    <option value="">ເລືອກ ອັດຕາສ່ວນ (Ratio)...</option>
-                                    <option value="--ar 16:9">16:9 (ແນວນອນ / TV)</option>
-                                    <option value="--ar 1:1">1:1 (ສີ່ຫຼ່ຽມ / IG)</option>
-                                    <option value="--ar 9:16">9:16 (ແນວຕັ້ງ / Mobile)</option>
-                                </select>
+<option value="">ເລືອກ ອັດຕາສ່ວນ (Ratio)...</option>
+<option value="ອັດຕາສ່ວນພາບ 1:1">1:1 (ສີ່ຫຼ່ຽມ / IG)</option>
+<option value="ອັດຕາສ່ວນພາບ 4:5">4:5 (ໂພສ IG/Facebook)</option>
+<option value="ອັດຕາສ່ວນພາບ 9:16">9:16 (ແນວຕັ້ງ / Story / TikTok)</option>
+<option value="ອັດຕາສ່ວນພາບ 16:9">16:9 (ແນວນອນ / YouTube / TV)</option>
+<option value="ອັດຕາສ່ວນພາບ 4:3">4:3 (ສະໄລດ໌)</option>
+</select>
                             </div>
                         </div>
 
@@ -566,11 +573,14 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <button onclick="copyGeneratedPrompt()" class="w-full py-3.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-bold rounded-2xl shadow-xl shadow-orange-600/30 transition text-xs flex items-center justify-center gap-2">
-                            <span>📋 ຄັດລອກ Prompt ນີ້ໄປໃຊ້</span>
-                        </button>
-                        <p class="text-[10px] text-slate-500 text-center">ສາມາດນຳໄປວາງໃນ ChatGPT, Gemini, Midjourney ຫຼື Claude ໄດ້ທັນທີ</p>
+                    <div class="space-y-3">
+                        <p id="placeholder-warn" class="hidden text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2">⚠️ ຍັງມີຂໍ້ຄວາມໃນ [ ] — ແກ້ເປັນຂໍ້ມູນຈິງຂອງທ່ານກ່ອນສົ່ງ</p>
+                        <div id="send-ai-row"></div>
+                        <div class="flex gap-2">
+                            <button onclick="copyGeneratedPrompt()" class="flex-1 py-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-bold rounded-2xl text-xs">📋 ຄັດລອກ Prompt</button>
+                            <button id="save-preset-btn" type="button" class="px-4 py-3 bg-slate-800 border border-slate-700 hover:border-orange-500 text-slate-200 font-bold rounded-2xl text-xs">⭐ ບັນທຶກ</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 text-center">ກົດຊື່ AI ເພື່ອເປີດແອັບ — Prompt ຖືກຄັດລອກໃຫ້ອັດຕະໂນມັດ (ບາງແອັບຕ້ອງກົດວາງເອງ)</p>
                     </div>
                 </div>
             </div>
@@ -580,94 +590,12 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
         <section id="sec-tools" class="tab-content hidden space-y-6">
             <div class="border-b border-slate-800 pb-4">
                 <h2 class="text-2xl font-bold text-white">ລິ້ງເຂົ້າໃຊ້ເຄື່ອງມື AI ຍອດນິຍົມ (AI Tools Directory)</h2>
-                <p class="text-sm text-slate-400">ຄລິກເພື່ອເປີດແອັບພລິເຄຊັນ AI ທາງການໄດ້ໂດຍตรง.</p>
+                <p class="text-sm text-slate-400">ກົດເພື່ອເປີດແອັບ AI ໂດຍກົງ (ບໍ່ມີແອັບ ຈຶ່ງເປີດເວັບ).</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- ChatGPT -->
-                <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="app-card p-5 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm border border-emerald-500/30">
-                            GPT
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm group-hover:text-emerald-400 transition">ChatGPT</h3>
-                            <p class="text-xs text-slate-400">OpenAI • SOP & General Chat</p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-500 group-hover:text-emerald-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </a>
-
-                <!-- Google Gemini -->
-                <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer" class="app-card p-5 rounded-2xl border border-slate-800 hover:border-blue-500/50 transition flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm border border-blue-500/30">
-                            GEM
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm group-hover:text-blue-400 transition">Google Gemini</h3>
-                            <p class="text-xs text-slate-400">Google • Workspace & Planning</p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-500 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </a>
-
-                <!-- NotebookLM -->
-                <a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" class="app-card p-5 rounded-2xl border border-slate-800 hover:border-purple-500/50 transition flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm border border-purple-500/30">
-                            NLM
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm group-hover:text-purple-400 transition">NotebookLM</h3>
-                            <p class="text-xs text-slate-400">Google • AI Knowledge Base</p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </a>
-
-                <!-- Claude AI -->
-                <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="app-card p-5 rounded-2xl border border-slate-800 hover:border-amber-500/50 transition flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm border border-amber-500/30">
-                            CLD
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm group-hover:text-amber-400 transition">Claude AI</h3>
-                            <p class="text-xs text-slate-400">Anthropic • Writing & Coding</p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-500 group-hover:text-amber-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </a>
-
-                <!-- DeepSeek -->
-                <a href="https://chat.deepseek.com" target="_blank" rel="noopener noreferrer" class="app-card p-5 rounded-2xl border border-slate-800 hover:border-sky-500/50 transition flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-sm border border-sky-500/30">
-                            DSK
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm group-hover:text-sky-400 transition">DeepSeek</h3>
-                            <p class="text-xs text-slate-400">DeepSeek • Math & Reasoning</p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-500 group-hover:text-sky-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </a>
-
-                <!-- Google AI Studio -->
-                <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" class="app-card p-5 rounded-2xl border border-slate-800 hover:border-orange-500/50 transition flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-sm border border-orange-500/30">
-                            KEY
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm group-hover:text-orange-400 transition">Google AI Studio</h3>
-                            <p class="text-xs text-slate-400">Get Gemini API Key Free</p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-500 group-hover:text-orange-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </a>
-            </div>
+            <div id="ios-mode-box" class="hidden app-card rounded-2xl p-4"></div>
+            <div id="ai-apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <p class="text-xs text-slate-500">ກົດ “ເປີດແອັບ” — ຖ້າຕິດຕັ້ງແອັບແລ້ວຈະເປີດແອັບ ຖ້າບໍ່ມີຈະເປີດເວັບແທນ. ປຸ່ມ ⬇︎ (Android) ໄປ Play Store.</p>
         </section>
 
 
@@ -759,119 +687,6 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
         }
 
         // Apply Expanded Prompt Builder Presets
-        function applyPreset(type, silent) {
-            const role = document.getElementById('builder-role');
-            const task = document.getElementById('builder-task');
-            const context = document.getElementById('builder-context');
-            const format = document.getElementById('builder-format');
-            const style = document.getElementById('img-style');
-            const aspect = document.getElementById('img-aspect');
-            const cot = document.getElementById('builder-cot');
-
-            if (type === 'image') {
-                role.value = "ເຈົ້າຄືນັກອອກແບບຮູບພາບ 3D ແລະ ຜູ້ຊ່ຽວຊານການຂຽນ Prompt ສ້າງຮູບພາບ";
-                task.value = "ສ້າງຮູບຫຸ່ນຍົນຜູ້ຊ່ວຍ AI ຊື່ ບຸນມາ ເປັນຕົວລະຄອນໜ້າຮັກ ມີສີສົ້ມ ແລະ ສີເທົາເຂັ້ມ";
-                context.value = "ມີດວງຕາສີຟ້າເປັ່ງປະກາຍ ທ່າທາງເປັນມິດ ອອກແບບແບບອະນາຄົດ ພື້ນຫຼັງສີເຂັ້ມ ວັດສະດຸໂລຫະເງົາງາມ";
-                format.value = "ຄວາມລະອຽດສູງ 8K, ພາບ 3D ຄົມຊັດ, ແສງສະຕູດິໂອ, ແສງເງົາສົມຈິງ, ມຸມມອງສວຍງາມ";
-                style.value = "3D Pixar Render, Cute Character";
-                aspect.value = "--ar 1:1";
-                cot.checked = false;
-            } else if (type === 'email') {
-                role.value = "ເຈົ້າຄືຜູ້ຊ່ວຍຂຽນເອກະສານ ແລະ ອີເມວທາງການ (Executive Communication Assistant)";
-                task.value = "ຈົ່ງຮ່າງອີເມວແຈ້ງເຊີນປະຊຸມສະຫຼຸບແຜນງານປະຈຳເດືອນ ແລະ ຕິດຕາມຄວາມຄືບໜ້າໂຄງການ";
-                context.value = "ສົ່ງເຖິງທີມງານບໍລິຫານ ແລະ ຫົວໜ້າຂະແໜງການ ໂດຍເນັ້ນຄວາມສຸພາບ ແລະ ຊັດເຈນ";
-                format.value = "ຮູບແບບອີເມວທາງການ: 1. ຫົວຂໍ້ (Subject), 2. ຄຳທັກທາຍ, 3. ວັດຖຸປະສົງ, 4. ກຳນົດເວລາ ແລະ ລິ້ງປະຊຸມ";
-                style.value = "";
-                aspect.value = "";
-                cot.checked = false;
-            } else if (type === 'report') {
-                role.value = "ເຈົ້າຄືນັກວິເຄາະຂໍ້ມູນ ແລະ ຜູ້ຊ່ວຍສະຫຼຸບບົດລາຍງານ (Data Analyst & Report Specialist)";
-                task.value = "ຈົ່ງສະຫຼຸບບົດບັນທຶກການປະຊຸມ (Meeting Notes) ໃຫ້ເປັນແຜນປະຕິບັດງານ (Action Plan)";
-                context.value = "ຈາກເອກະສານການປະຊຸມເລື່ອງການເພີ່ມປະສິດທິພາບການເຮັດວຽກ ດ້ວຍ AI";
-                format.value = "ສະຫຼຸບ 3 ປະເດັນຫຼັກ ພ້ອມ ຕາຕະລາງ Action Items, ຜູ້ຮັບຜິດຊອບ, ແລະ ກຳນົດເວລາສົ່ງວຽກ";
-                style.value = "";
-                aspect.value = "";
-                cot.checked = true;
-            } else if (type === 'code') {
-                role.value = "ເຈົ້າຄືນັກພັດທະນາຊອບແວມືອາຊີບ (Senior Full-Stack Developer)";
-                task.value = "ຈົ່ງຂຽນ ແລະ ກວດສອບຂໍ້ຜິດພາດຂອງຟັງຊັນ (Bug Fix & Optimization)";
-                context.value = "ຕ້ອງການໃຫ້ແກ້ໄຂໂຄ້ດ JavaScript/Tailwind CSS ໃຫ້ເຮັດວຽກໄດ້ໄວ ແລະ ຮອງຮັບມືຖື";
-                format.value = "ສະແດງໂຄ້ດທີ່ແກ້ໄຂແລ້ວ ພ້ອມຄຳອະທິບາຍແນວທາງການເຮັດວຽກເທື່ອລະຂັ້ນຕອນ ແລະ ຂໍ້ຄວນລະວັງ";
-                style.value = "";
-                aspect.value = "";
-                cot.checked = true;
-            } else if (type === 'english') {
-                role.value = "ເຈົ້າຄືອາຈານສອນພາສາອັງກິດ ແລະ ນັກແປມືອາຊີບ (Native English Tutor & Translator)";
-                task.value = "ຈົ່ງແປຂໍ້ຄວາມ ແລະ ປັບແຕ່ງປະໂຫຍກໃຫ້ເປັນພາສາອັງກິດທາງການ (Business English)";
-                context.value = "ນຳໃຊ້ສຳລັບການຕິດຕໍ່ສື່ສານ ແລະ ສົ່ງອີເມວກັບຄູ່ຄ້າຕ່າງປະເທດ";
-                format.value = "1. ປະໂຫຍກທີ່ແປແລ້ວ, 2. ຄຳສັບສຳຄັນ (Vocabulary), 3. ຕົວຢ່າງປະໂຫຍກທາງເລືອກອື່ນ (Alternative options)";
-                style.value = "";
-                aspect.value = "";
-                cot.checked = false;
-            } else if (type === 'sop') {
-                role.value = "ເຈົ້າຄືຜູ້ຊ່ຽວຊານດ້ານການວາງລະບົບ SOP (Standard Operating Procedure Specialist)";
-                task.value = "ຈົ່ງສ້າງຄູ່ມືຂັ້ນຕອນການເຮັດວຽກມາດຕະຖານ (SOP) ຕາມຫຼັກການ 5 ປະການ";
-                context.value = "ສຳລັບຂະບວນການກວດສອບ ແລະ ອະນຸມັດເອກະສານພາຍໃນອົງກອນ";
-                format.value = "1. ວັດຖຸປະສົງ, 2. ຂັ້ນຕອນ 1-2-3-4 (ອະທິບາຍໃຫ້ງ່າຍ), 3. ຕາຕະລາງ Flowchart & ຜູ້ຮັບຜິດຊອບ";
-                style.value = "";
-                aspect.value = "";
-                cot.checked = true;
-            }
-            updatePromptOutput();
-            if (!silent) showToast('ນຳໃຊ້ Preset ສໍາເລັດ!');
-        }
-
-        // Live Dynamic Prompt Generator
-        function updatePromptOutput() {
-            const role = document.getElementById('builder-role').value.trim();
-            const task = document.getElementById('builder-task').value.trim();
-            const context = document.getElementById('builder-context').value.trim();
-            const format = document.getElementById('builder-format').value.trim();
-            const style = document.getElementById('img-style').value;
-            const aspect = document.getElementById('img-aspect').value;
-            const isCot = document.getElementById('builder-cot').checked;
-
-            let promptParts = [];
-
-            if (role) promptParts.push(`[Role / ບົດບາດ]:\n${role}`);
-            if (task) promptParts.push(`[Task / ວຽກງານ]:\n${task}`);
-            if (context) promptParts.push(`[Context / ບໍລິບົດ]:\n${context}`);
-            
-            let formatCombined = format;
-            if (style) formatCombined += (formatCombined ? `, ` : '') + style;
-            if (aspect) formatCombined += (formatCombined ? ` ` : '') + aspect;
-            
-            if (formatCombined) promptParts.push(`[Format & Style / ຮູບແບບ]:\n${formatCombined}`);
-            if (isCot) promptParts.push(`[Technique]:\nLet's think step by step (ກະລຸນາວິເຄາະ ແລະ ຄິດໄປເທື່ອລະຂັ້ນຕອນຢ່າງມີຕັກກະ ກ່ອນໃຫ້ຄຳຕອບ).`);
-
-            let resultText = promptParts.join('\n\n');
-
-            if (!resultText.trim()) {
-                resultText = "ກະລຸນາປ້ອນຂໍ້ມູນໃນຟອມດ້ານຊ້າຍ ເພື່ອສ້າງ Prompt ອັດໂນມັດ...";
-            }
-
-            document.getElementById('output-prompt-box').innerText = resultText;
-        }
-
-        // Reset Prompt Builder Form
-        function resetBuilder() {
-            document.getElementById('builder-role').value = '';
-            document.getElementById('builder-task').value = '';
-            document.getElementById('builder-context').value = '';
-            document.getElementById('builder-format').value = '';
-            document.getElementById('img-style').value = '';
-            document.getElementById('img-aspect').value = '';
-            document.getElementById('builder-cot').checked = false;
-            updatePromptOutput();
-            showToast('ລ້າງຂໍ້ມູນຮຽບຮ້ອຍ!');
-        }
-
-        // Listen for user inputs in Prompt Builder
-        ['builder-role', 'builder-task', 'builder-context', 'builder-format'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', updatePromptOutput);
-        });
-
         // Copy Clipboard Helper with Fallback
         function copyText(text) {
             if (!text) return;
@@ -896,11 +711,6 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
                     showToast('ບໍ່ສາມາດຄັດລອກໄດ້');
                 }
                 document.body.removeChild(textArea);
-        }
-
-        function copyGeneratedPrompt() {
-            const text = document.getElementById('output-prompt-box').innerText;
-            copyText(text);
         }
 
         // Toast Notification System
@@ -1149,13 +959,16 @@ function initLearning() { renderTutorChips(); startQuiz(); renderProgress(); }
         window.onload = function() {
             const h0 = location.hash.slice(1);
             switchTab(h0 && document.getElementById('sec-' + h0) ? h0 : 'dashboard');
-            applyPreset('image', true);
             const nb = document.getElementById('net-banner'), setNet = () => nb && nb.classList.toggle('hidden', navigator.onLine);
             window.addEventListener('online', setNet); window.addEventListener('offline', setNet); setNet();
             initLearning();
-            if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed', err));
+            if (window.BPWA) BPWA.register();
         };
     </script>
+    <script src="js/localfiles.js"></script>
+    <script src="js/pwa.js"></script>
+    <script src="js/ai-apps.js"></script>
+    <script src="js/prompt-presets.js"></script>
     <script src="auth.js"></script>
 </body>
 </html>

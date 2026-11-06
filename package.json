@@ -1,0 +1,8 @@
+{
+  "name": "bounma-ai",
+  "version": "3.4.0",
+  "private": true,
+  "scripts": {
+    "build:css": "npx tailwindcss@3.4.17 -c tailwind.config.js -i src/input.css -o styles.css --minify"
+  }
+}
