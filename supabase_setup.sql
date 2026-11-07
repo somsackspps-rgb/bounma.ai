@@ -1,7 +1,8 @@
 -- =====================================================================
 -- Bounma AI : Supabase setup  (v3.2)
--- Run ONCE in Supabase Dashboard > SQL Editor > New query > Run.
--- Safe to re-run. It fixes: "approve user / change role does nothing".
+-- FRESH INSTALL REFERENCE ONLY. Do NOT rerun this whole file on an existing project.
+-- Existing deployments must apply only the reviewed files in supabase_migrations/.
+-- This script contains historical setup/policy statements that can replace live configuration.
 --
 -- ROOT CAUSES this script fixes
 --  1. profiles had no `status` column (and the date column was named
@@ -9,8 +10,8 @@
 --  2. No RLS policy let an admin UPDATE other users' rows. Supabase then
 --     silently updates 0 rows (no error), so the button looked broken.
 --  3. Role/status were not protected: add server-side guards.
--- NOTE: existing users become 'pending' (except the first admin below).
---       Approve them from the Admin tab after running this.
+-- NOTE: existing profile rows are preserved by the backfill. New users are pending.
+--       Assign the initial trusted Admin manually; do not promote by email in a trigger.
 -- =====================================================================
 
 -- 1) profiles: columns ------------------------------------------------
@@ -71,21 +72,20 @@ $$;
 revoke all on function public.is_admin(), public.is_staff(), public.is_approved() from public;
 grant execute on function public.is_admin(), public.is_staff(), public.is_approved() to authenticated;
 
--- 4) auto-create profile on sign-up (role whitelist: student/teacher) -
+-- 4) auto-create profile on sign-up. New users can never self-register as Admin.
 create or replace function public.handle_new_user() returns trigger
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = '' as $function$
 declare
-  r text := coalesce(new.raw_user_meta_data->>'role', 'student');
-  first_admin boolean := lower(new.email) = 'somsack.spps@gmail.com';
+  new_role text;
 begin
-  if r not in ('student','teacher') then r := 'student'; end if;
+  new_role := coalesce(nullif(new.raw_user_meta_data->>'role', ''), 'student');
+  if new_role not in ('student', 'teacher') then new_role := 'student'; end if;
   insert into public.profiles (id, full_name, email, role, status)
-  values (new.id, coalesce(new.raw_user_meta_data->>'full_name',''), new.email,
-          case when first_admin then 'admin' else r end,
-          case when first_admin then 'approved' else 'pending' end)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name',''), new.email, new_role, 'pending')
   on conflict (id) do nothing;
   return new;
-end $$;
+end;
+$function$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
@@ -143,7 +143,8 @@ select u.id, coalesce(u.raw_user_meta_data->>'full_name',''), u.email, 'student'
 from auth.users u where not exists (select 1 from public.profiles p where p.id = u.id);
 
 update public.profiles p set email = u.email from auth.users u where p.id = u.id and p.email is null;
-update public.profiles set role = 'admin', status = 'approved' where lower(email) = 'somsack.spps@gmail.com';
+-- Do not assign Admin from an email address. Assign the first trusted Admin manually
+-- through a reviewed, one-time SQL action in the Supabase Dashboard.
 
 -- 8) check result -----------------------------------------------------
 select email, role, status, created_at from public.profiles order by created_at;
@@ -335,9 +336,8 @@ begin
        or new.role is distinct from old.role
        or new.status is distinct from old.status
        or new.email is distinct from old.email
-       or new.full_name is distinct from old.full_name
        or new.created_at is distinct from old.created_at then
-      raise exception 'only an admin can modify profile fields other than own avatar';
+      raise exception 'only an admin can modify protected profile fields';
     end if;
   end if;
   if old.role = 'admin' and old.status = 'approved' and (new.role <> 'admin' or new.status <> 'approved')

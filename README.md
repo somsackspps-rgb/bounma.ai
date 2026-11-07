@@ -1,8 +1,11 @@
 # ບຸນມາ AI v3.5 — ວິທີຕິດຕັ້ງ
 
 ## 1) ຖານຂໍ້ມູນ (Supabase → SQL Editor)
-ຣັນໄຟລ໌ `supabase_setup.sql` ທັງໝົດ (ຣັນຊ້ຳໄດ້ ບໍ່ລຶບຂໍ້ມູນ) — ສ່ວນໃໝ່ຢູ່ທ້າຍໄຟລ໌ "v3.4".
-ຕື່ມ: ປະເພດຂໍ້ຄວາມ file/link, list_group_members, remove_group_member, ປ້ອງກັນບໍ່ໃຫ້ເຈົ້າຂອງຫ້ອງແກ້ຄ່າອື່ນນອກຈາກ ຊື່/ຄຳອະທິບາຍ.
+**ສຳລັບໂປຣເຈັກທີ່ໃຊ້ງານຢູ່ແລ້ວ: ຫ້າມຣັນ `supabase_setup.sql` ທັງໝົດຊ້ຳ.** ໄຟລ໌ນັ້ນເປັນສະຄຣິບອ້າງອີງສຳລັບຕິດຕັ້ງໃໝ່ ແລະມີຄຳສັ່ງສ້າງ/ປ່ຽນ RLS policies ແລະ triggers.
+
+ສຳລັບລະບົບ Bounma AI ປັດຈຸບັນ ໃຫ້ໃຊ້ສະເພາະ migration ທີ່ກວດສອບແລ້ວໃນ `supabase_migrations/` ເທົ່ານັ້ນ. ສຳຮອງ SQL ເກົ່າກ່ອນທຸກຄັ້ງ.
+
+ສະຄຣິບຕິດຕັ້ງໃໝ່ຈະບໍ່ກຳນົດ Admin ຈາກອີເມວອັດຕະໂນມັດ. ຕ້ອງກຳນົດບັນຊີ Admin ຜ່ານຄຳສັ່ງທີ່ກວດສອບແລ້ວໃນ Supabase Dashboard ເທົ່ານັ້ນ.
 
 ## 2) ອັບໂຫຼດເວັບ (GitHub Pages)
 ອັບໂຫຼດທຸກໄຟລ໌ **ລວມໂຟນເດີ `js/` ແລະ `assets/`** ແລ້ວ Ctrl+Shift+R ໃນເບົາເຊີ.
@@ -21,7 +24,12 @@
 3. ໃນ `index.html` ລຶບ 2 ບລັອກ `<script src="https://cdn.tailwindcss.com">` + `tailwind.config = ...` ແລ້ວໃສ່ `<link rel="stylesheet" href="styles.css">`
 4. ເພີ່ມ `./styles.css` ໃນ APP_SHELL ຂອງ `sw.js` ແລະແກ້ VERSION
 
-## 5) ກວດດ້ວຍເຄື່ອງຈິງ (ຕ້ອງເຮັດ — ຂ້ອຍທົດສອບໃນເຄື່ອງຈິງບໍ່ໄດ້)
+## 5) Migration ສຳລັບ v3.5.1 (ການແກ້ໄຂຊື່ໂປຣໄຟລ໌)
+ໄຟລ໌ `supabase_migrations/20261107_profile_edit_guard.sql` ປ່ຽນສະເພາະ trigger function `guard_profile_update()` ເພື່ອໃຫ້ຜູ້ໃຊ້ແກ້ `full_name` ແລະ `avatar_url` ຂອງຕົນເອງໄດ້. ຍັງປ້ອງກັນ `id`, `email`, `role`, `status`, `created_at` ແລະບັນຊີ Admin ຄົນສຸດທ້າຍ.
+
+ສະຄຣິບນີ້ຍັງບໍ່ໄດ້ຣັນໃນ Supabase ຈິງ. ກ່ອນຣັນ ຕ້ອງອ່ານ SQL ແລະສຳຮອງ function definition ເກົ່າ. ມັນບໍ່ປ່ຽນແຖວຂໍ້ມູນໃດໆ.
+
+## ກວດດ້ວຍເຄື່ອງຈິງ (ຕ້ອງເຮັດ — ຂ້ອຍທົດສອບໃນເຄື່ອງຈິງບໍ່ໄດ້)
 - Android Chrome: ປຸ່ມ "📲 ຕິດຕັ້ງແອັບ" ຂຶ້ນໜ້າຕ່າງຕິດຕັ້ງ; ກົດ "ເປີດແອັບ" ຂອງ ChatGPT/Claude/Gemini ແລ້ວເປີດແອັບ (ຖ້າມີ) ຫຼືເວັບ (ຖ້າບໍ່ມີ)
 - iPhone Safari: ປຸ່ມຕິດຕັ້ງສະແດງຂັ້ນຕອນ Share → Add to Home Screen; ກວດວ່າ AI ໃດເປີດແອັບໄດ້
 - ຖ້າແອັບໃດເປີດບໍ່ຖືກ: ແກ້ຕາຕະລາງ `APPS` ເທິງສຸດຂອງ `js/ai-apps.js` (pkg = ຊື່ແພັກເກດ Android, ios = URL scheme)
@@ -47,9 +55,9 @@
 ປະເພດທີ່ອະນຸຍາດ: ຮູບ, PDF, Word, Excel, PowerPoint, TXT, CSV, MP3, MP4 (ບໍ່ຮັບ ZIP/EXE/HTML)
 ເພດານບັງຄັບທີ່ຖານຂໍ້ມູນ ຈຶ່ງຂ້າມຜ່ານຈາກເວັບບໍ່ໄດ້
 
-## ຂັ້ນຕອນຕິດຕັ້ງ v3.5
-1. ຣັນ `supabase_setup.sql` ທັງໝົດຄືນ (ສ່ວນ v3.5 ຢູ່ທ້າຍໄຟລ໌) ແລ້ວຣັນ `supabase_checks.sql` ເພື່ອກວດ
-2. ອັບໂຫຼດເວັບໃໝ່ (ມີໄຟລ໌ໃໝ່ `js/filepreview.js`)
+## ຂັ້ນຕອນປ່ອຍເວີຊັນ v3.5.1
+1. ສຳລັບໂປຣເຈັກເກົ່າ: ຫ້າມຣັນ `supabase_setup.sql` ທັງໝົດ. ຖ້າຈະແກ້ບັນຫາຊື່ໂປຣໄຟລ໌ ໃຫ້ກວດແລະຣັນ migration ຂໍ້ 5 ເທົ່ານັ້ນ.
+2. ອັບໂຫຼດໄຟລ໌ເວັບທັງໝົດຈາກ ZIP ໃໝ່ ໂດຍຮັກສາໂຄງສ້າງໂຟນເດີເດີມ.
 3. Deploy Edge Function ລຶບໄຟລ໌ໝົດອາຍຸ:
    `supabase functions deploy cleanup-files --no-verify-jwt`
    `supabase secrets set CLEANUP_SECRET=<ຂໍ້ຄວາມສຸ່ມຍາວໆ>`

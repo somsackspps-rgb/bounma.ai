@@ -35,3 +35,11 @@ These tests require opening the deployed app against its configured Supabase pro
 
 ## Important
 Static checks do not prove live Supabase behavior. Do not rerun `supabase_setup.sql` as part of this Authentication code update. Live testing should be performed before production release.
+
+
+## v3.5.1 follow-up review
+- Added `supabase_migrations/20261107_profile_edit_guard.sql` to allow a signed-in user to edit only their own display name and avatar while keeping id/email/role/status/created_at protected.
+- Updated the fresh-install reference SQL so new signups are always pending and cannot self-register as Admin; removed automatic Admin assignment by email.
+- Updated the service-worker version to 3.5.1 so deployed clients can detect the release.
+- The profile guard migration has NOT been applied to the live Supabase project by this package. Apply it only after review.
+- The classmates profile-read policy remains a separate privacy-hardening item because the current chat UI still reads embedded profile fields for message senders. Do not remove that policy until the chat query is migrated to a safe profile lookup path.
