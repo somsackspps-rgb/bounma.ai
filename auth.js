@@ -258,8 +258,8 @@
     if (res.error) { box.innerHTML = head('👑 ຈັດການຜູ້ໃຊ້', '') + `<p class="text-sm text-red-300">${esc(isNet(res.error) ? 'ເຊື່ອມຕໍ່ບໍ່ໄດ້' : res.error.message)}</p><button onclick="BAuth.reload()" class="chip mt-2">ລອງໃໝ່</button>`; return; }
     adminData = res.data || [];
     if (adminData.length && adminData[0].status === undefined) { box.innerHTML = head('👑 ຈັດການຜູ້ໃຊ້', '') + '<p class="text-sm text-red-300">ຖານຂໍ້ມູນບໍ່ມີຖັນ status — ກະລຸນາຣັນ supabase_setup.sql ກ່ອນ.</p>'; return; }
-    box.innerHTML = head('👑 ຈັດການຜູ້ໃຊ້', '<span id="adm-sub"></span>') + `<div class="flex flex-wrap gap-2 items-center"><div id="adm-filters" class="flex flex-wrap gap-2"></div><input id="adm-q" type="search" placeholder="ຄົ້ນຫາຊື່ ຫຼືອີເມວ" oninput="BAuth.search(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm flex-1 min-w-[160px]"></div><div id="adm-list" class="space-y-3"></div>`;
-    $('adm-q').value = adminQ; renderAdminList();
+    box.innerHTML = head('👑 ຈັດການຜູ້ໃຊ້', '<span id="adm-sub"></span>') + `<div id="adm-storage"></div><div class="flex flex-wrap gap-2 items-center"><div id="adm-filters" class="flex flex-wrap gap-2"></div><input id="adm-q" type="search" placeholder="ຄົ້ນຫາຊື່ ຫຼືອີເມວ" oninput="BAuth.search(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm flex-1 min-w-[160px]"></div><div id="adm-list" class="space-y-3"></div>`;
+    $('adm-q').value = adminQ; renderAdminList(); loadStorageCard();
   }
   function renderAdminList() {
     const list = $('adm-list'); if (!list) return;
@@ -355,20 +355,6 @@
     const keep=pendingOpen||(activeRoom&&activeRoom.id); pendingOpen=null; // keep the open room when the tab is re-entered / reloaded
     if(keep&&roomRows.some(x=>x.id===keep)) openRoom(keep); else activeRoom=null;
   }
-  async function uploadAvatar(ev){
-    ev.preventDefault(); const file=$('avatar-file').files[0]; if(!file)return showToast('ກະລຸນາເລືອກຮູບກ່ອນ');
-    if(file.size>2*1024*1024)return showToast('ຮູບຕ້ອງມີຂະໜາດບໍ່ເກີນ 2 MB');
-    if(!['image/jpeg','image/png','image/webp'].includes(file.type))return showToast('ຮອງຮັບ JPG, PNG ແລະ WebP');
-    const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg', path=me.id+'/avatar.'+ext;
-    const {error:upErr}=await sb.storage.from('profile-avatars').upload(path,file,{upsert:true,contentType:file.type});
-    if(upErr)return showToast('ອັບໂຫຼດຮູບບໍ່ສຳເລັດ: '+upErr.message);
-    const {data}=sb.storage.from('profile-avatars').getPublicUrl(path);
-    const avatarUrl=data.publicUrl+'?v='+Date.now();
-    const {error}=await sb.from('profiles').update({avatar_url:avatarUrl}).eq('id',me.id);
-    if(error)return showToast('ບັນທຶກຮູບບໍ່ສຳເລັດ: '+error.message);
-    profile.avatar_url=avatarUrl; showToast('ອັບเดດຮູບໂປຣໄຟລ໌ແລ້ວ'); await loadClassroom();
-    if(activeRoom){const id=activeRoom.id; openRoom(id);}
-  }
   async function createRoom(ev){
     ev.preventDefault(); if(roomBusy)return; roomBusy=true;
     const name=$('room-name').value.trim(), description=$('room-desc').value.trim();
@@ -419,7 +405,7 @@
   function roomHead() {
     const r = activeRoom; if (!r) return '';
     const btn = (act, t) => `<button type="button" onclick="BAuth.${act}()" class="chip">${t}</button>`;
-    return `<div class="flex flex-wrap justify-between gap-2"><div class="min-w-0"><h3 class="font-bold text-lg break-words">${esc(r.name)}</h3><p class="text-xs text-slate-400">${esc(r.description || '')}</p></div><div class="flex flex-wrap gap-2 items-start">${btn('members', '👥 ສະມາຊິກ')}${isStaff() ? btn('share', '🔗 ແບ່ງປັນລິ້ງ') : ''}${canRename(r) ? btn('rename', '✏️ ແກ້ຊື່') : ''}${isStaff() ? btn('announce', '📢 ປະກາດ') : ''}</div></div>`;
+    return `<div class="flex flex-wrap justify-between gap-2"><div class="min-w-0"><h3 class="font-bold text-lg break-words">${esc(r.name)}</h3><p class="text-xs text-slate-400">${esc(r.description || '')}</p></div><div class="flex flex-wrap gap-2 items-start">${btn('members', '👥 ສະມາຊິກ')}${btn('profile', '👤 ໂປຣໄຟລ໌')}${isStaff() ? btn('share', '🔗 ແບ່ງປັນລິ້ງ') : ''}${canRename(r) ? btn('rename', '✏️ ແກ້ຊື່') : ''}${isStaff() ? btn('announce', '📢 ປະກາດ') : ''}</div></div>`;
   }
   async function renameRoom() {
     const r = activeRoom; if (!r || !canRename(r)) return;
@@ -472,12 +458,12 @@
     chat.innerHTML = `<div class="app-card rounded-2xl p-4 space-y-3"><div id="room-head">${roomHead()}</div><div id="room-members" class="hidden bg-slate-950/50 rounded-xl p-3 space-y-2"></div>` +
       `<div id="room-messages" class="space-y-3 max-h-[55vh] overflow-y-auto p-2 bg-slate-950/50 rounded-xl"><p class="text-sm text-slate-400">ກຳລັງໂຫຼດຂໍ້ຄວາມ...</p></div>` +
       `<form id="room-send" class="space-y-2"><textarea id="room-text" class="${IN}" rows="2" maxlength="4000" placeholder="ພິມຂໍ້ຄວາມ..."></textarea>` +
-      `<div class="grid sm:grid-cols-2 gap-2"><label class="text-xs text-slate-400">📎 ແນບໄຟລ໌ (ເກັບໃນເຄື່ອງທ່ານເທົ່ານັ້ນ ≤ 50 MB)<input id="room-file" type="file" class="block text-xs mt-1 w-full"></label><label class="text-xs text-slate-400">🔗 ແນບລິ້ງ (Google Drive ... ໃຫ້ເພື່ອນເປີດໄດ້)<input id="room-link" type="text" inputmode="url" autocapitalize="none" autocomplete="off" maxlength="500" placeholder="https://..." class="${IN} !py-2 mt-1"></label></div>` +
-      `<p class="text-[11px] text-slate-500">ໄຟລ໌ແນບບໍ່ຖືກອັບໂຫຼດຂຶ້ນເຊີບເວີ — ສະມາຊິກຄົນອື່ນຈະເຫັນແຕ່ຊື່ໄຟລ໌. ຖ້າຢາກໃຫ້ເພື່ອນເປີດໄດ້ ໃຫ້ແປະລິ້ງ Drive.</p>` +
+      `<div class="grid sm:grid-cols-2 gap-2"><label class="text-xs text-slate-400">📎 ແນບໄຟລ໌<input id="room-file" type="file" class="block text-xs mt-1 w-full"></label><label class="text-xs text-slate-400">🔗 ແນບລິ້ງ (Google Drive ... ໃຫ້ເພື່ອນເປີດໄດ້)<input id="room-link" type="text" inputmode="url" autocapitalize="none" autocomplete="off" maxlength="500" placeholder="https://..." class="${IN} !py-2 mt-1"></label></div>` +
+      `<div class="text-xs text-slate-300 space-y-1.5 bg-slate-950/40 rounded-xl p-2.5"><label class="flex items-start gap-2"><input type="radio" name="share-mode" value="share" checked class="mt-0.5 accent-emerald-500"><span>📤 <b>ແຊຣ໌ໃຫ້ສະມາຊິກ</b> ເບິ່ງ/ດາວໂຫຼດໄດ້ <span class="text-slate-500">(ເກັບຊົ່ວຄາວ, ≤ 5 MB, ຮູບຖືກບີບອັດອັດຕະໂນມັດ)</span></span></label><label class="flex items-start gap-2"><input type="radio" name="share-mode" value="local" class="mt-0.5 accent-emerald-500"><span>💾 <b>ເກັບໃນເຄື່ອງຂ້ອຍເທົ່ານັ້ນ</b> <span class="text-slate-500">(ບໍ່ຂຶ້ນເຊີບເວີ, ຄົນອື່ນເຫັນແຕ່ຊື່ໄຟລ໌, ≤ 50 MB)</span></span></label><p class="text-slate-500">ໄຟລ໌ໃຫຍ່ກວ່າ 5 MB: ວາງລິ້ງ Drive ຢູ່ຊ່ອງດ້ານຂ້າງ</p></div><div id="room-usage" class="text-[11px] text-slate-500"></div>` +
       `<div class="flex justify-end"><button id="room-send-btn" class="bg-emerald-700 hover:bg-emerald-600 rounded-xl px-5 py-2 text-sm font-bold">ສົ່ງ</button></div></form></div>`;
     $('room-send').onsubmit = sendMessage;
     $('room-messages').onclick = onMessageClick;
-    await loadMessages('latest');
+    await loadMessages('latest'); refreshUsage();
     if (my !== openSeq) return;
     roomChannel = sb.channel('room-updates-' + me.id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages' }, payload => {
       if (payload.new.sender_id !== me.id) { notifyMessage(payload.new); if (activeRoom && payload.new.group_id === activeRoom.id) loadMessages('new'); }
@@ -493,7 +479,7 @@
     if (!activeRoom || activeRoom.id !== gid) return;
     const el = $('room-messages'); if (!el) return;
     if (error) { el.innerHTML = `<p class="text-sm text-red-300">${esc(error.message)}</p>`; return; }
-    let rows = data || [];
+    let rows = data || []; await loadFileMeta(rows); if (!activeRoom || activeRoom.id !== gid) return;
     if (mode === 'older') { rows = rows.reverse(); hasOlder = rows.length === PAGE; messageRows = rows.concat(messageRows); }
     else if (mode === 'new') { const have = new Set(messageRows.map(m => m.id)); messageRows = messageRows.concat(rows.filter(m => !have.has(m.id))); }
     else { rows = rows.reverse(); hasOlder = rows.length === PAGE; messageRows = rows; }
@@ -503,6 +489,15 @@
     const p = m.attachment_path; if (!p) return '';
     const lf = window.BFiles ? BFiles.parse(p) : null;
     if (lf) return `<div class="mt-2 rounded-xl bg-slate-900/70 border border-slate-700 p-2 text-xs" data-lf="${esc(lf.id)}"><div class="font-bold break-all">📎 ${esc(lf.name)}</div><div class="text-slate-400">${esc(fsize(lf.size))} • <span class="lf-state">ກຳລັງກວດ...</span></div><div class="lf-actions hidden gap-2 mt-1"><button type="button" class="chip" data-act="open-local" data-id="${esc(lf.id)}">ເປີດ</button><button type="button" class="chip" data-act="save-local" data-id="${esc(lf.id)}">ບັນທຶກ</button></div></div>`;
+    if (m.message_type === 'shared_file' && /^rf:/.test(p)) {
+      const id = p.slice(3), fm = fileMeta.get(id);
+      if (!fm) return '<div class="mt-2 text-xs text-slate-400">📎 ໄຟລ໌ (ບໍ່ພົບຂໍ້ມູນ)</div>';
+      const gone = !!fm.deleted_at || new Date(fm.expires_at) < new Date(), days = Math.max(0, Math.ceil((new Date(fm.expires_at) - Date.now()) / 864e5));
+      const thumb = fm.thumb && /^data:image\/jpeg;base64,/.test(fm.thumb) && !gone ? `<img src="${esc(fm.thumb)}" alt="" class="w-full max-h-40 object-cover cursor-pointer" data-act="view-shared" data-id="${esc(id)}">` : '';
+      const canDel = !gone && me && (fm.uploader_id === me.id || isStaff());
+      return `<div class="mt-2 rounded-xl bg-slate-900/70 border border-slate-700 overflow-hidden text-xs">${thumb}<div class="p-2"><div class="font-bold break-all">${window.BView ? BView.iconFor(fm.mime, fm.name) : '📎'} ${esc(fm.name)}</div><div class="text-slate-400">${esc(fsize(fm.size_bytes))} • ${gone ? 'ໝົດອາຍຸ / ຖືກລຶບແລ້ວ' : 'ເຫຼືອ ' + (Number.isFinite(days) ? days : '?') + ' ວັນ'}</div>` +
+        (gone ? '' : `<div class="flex flex-wrap gap-2 mt-1.5"><button type="button" class="chip" data-act="view-shared" data-id="${esc(id)}">👁 ເບິ່ງ</button><button type="button" class="chip" data-act="dl-shared" data-id="${esc(id)}">⬇︎ ດາວໂຫຼດ</button>${canDel ? `<button type="button" class="chip" data-act="del-shared" data-id="${esc(id)}" aria-label="ລຶບໄຟລ໌">🗑</button>` : ''}</div>`) + '</div></div>';
+    }
     if (m.message_type === 'link') { const u = safeUrl(p); let host = ''; try { host = new URL(u).hostname; } catch (_) {} return u ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow" class="text-sky-300 underline block mt-2 break-all">🔗 ${esc(host)} — ເປີດລິ້ງ</a>` : ''; }
     return `<button type="button" class="chip mt-2" data-act="open-legacy" data-path="${esc(p)}">📎 ເປີດໄຟລ໌ແນບ (ເກົ່າ)</button>`;
   }
@@ -512,10 +507,10 @@
   }
   function renderMessages(mode) {
     const el = $('room-messages'); if (!el) return;
-    const prevH = el.scrollHeight, nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    const prevH = el.scrollHeight, prevTop = el.scrollTop, nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
     el.innerHTML = (hasOlder ? '<div class="text-center"><button type="button" data-act="older" class="chip">⬆︎ ໂຫຼດຂໍ້ຄວາມກ່ອນໜ້າ</button></div>' : '') +
       (messageRows.map(msgHtml).join('') || '<p class="text-sm text-slate-400 text-center py-5">ຍັງບໍ່ມີຂໍ້ຄວາມ</p>');
-    if (mode === 'older') el.scrollTop = el.scrollHeight - prevH; else if (mode === 'latest' || nearBottom) el.scrollTop = el.scrollHeight;
+    if (mode === 'older') el.scrollTop = el.scrollHeight - prevH; else if (mode === 'keep') el.scrollTop = prevTop; else if (mode === 'latest' || nearBottom) el.scrollTop = el.scrollHeight;
     hydrateLocal();
   }
   async function hydrateLocal() {
@@ -532,24 +527,165 @@
     const act = b.getAttribute('data-act');
     try {
       if (act === 'older') { b.disabled = true; await loadMessages('older'); }
-      else if (act === 'open-local') { if (!(await BFiles.view(b.getAttribute('data-id')))) showToast('ບໍ່ພົບໄຟລ໌ໃນເຄື່ອງນີ້'); }
+      else if (act === 'open-local') {
+        const rec = await BFiles.get(b.getAttribute('data-id'));
+        if (!rec) showToast('ບໍ່ພົບໄຟລ໌ໃນເຄື່ອງນີ້'); else if (window.BView) BView.open({ name: rec.name, type: rec.type, size: rec.size, load: async () => rec.blob }); else BFiles.view(rec.id);
+      }
+      else if (act === 'view-shared') { const id = b.getAttribute('data-id'), fm = fileMeta.get(id); if (fm && window.BView) BView.open({ name: fm.name, type: fm.mime, size: fm.size_bytes, load: () => loadShared(id) }); }
+      else if (act === 'dl-shared') { const id = b.getAttribute('data-id'), fm = fileMeta.get(id); b.disabled = true; try { BView.download(await loadShared(id), fm.name); } finally { b.disabled = false; } }
+      else if (act === 'del-shared') await deleteShared(b.getAttribute('data-id'));
       else if (act === 'save-local') { if (!(await BFiles.download(b.getAttribute('data-id')))) showToast('ບໍ່ພົບໄຟລ໌ໃນເຄື່ອງນີ້'); }
       else if (act === 'open-legacy') {
         const w = window.open('about:blank', '_blank'); const { data, error } = await sb.storage.from(ROOM_BUCKET).createSignedUrl(b.getAttribute('data-path'), 3600);
         if (error || !data || !data.signedUrl) { if (w) w.close(); showToast('ເປີດໄຟລ໌ບໍ່ໄດ້'); } else if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
       }
-    } catch (e) { showToast('ບໍ່ສຳເລັດ: ' + (e.message || e)); }
+    } catch (e) { showToast('ບໍ່ສຳເລັດ: ' + friendly(e)); }
   }
+  // ----- v3.5: shared files (temporary, capped), preview, profile sheet -----
+  const fileMeta = new Map();
+  const SHARE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'text/plain', 'text/csv', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'audio/mpeg', 'audio/mp4', 'video/mp4']);
+  let LIM = null;
+  const DEFAULT_LIM = { room_quota: 104857600, max_file: 5242880, max_image: 3145728, expire_days: 14, daily_files: 30, msgs_per_min: 20 };
+  async function loadLimits() {
+    if (LIM) return LIM;
+    try { const { data } = await sb.rpc('bounma_limits'); const r = Array.isArray(data) ? data[0] : data; LIM = Object.assign({}, DEFAULT_LIM, r || {}); } catch (_) { LIM = Object.assign({}, DEFAULT_LIM); }
+    return LIM;
+  }
+  const friendly = e => {
+    const m = String((e && e.message) || e || '');
+    if (/ROOM_QUOTA/.test(m)) return 'ພື້ນທີ່ໄຟລ໌ຂອງຫ້ອງເຕັມ — ລຶບໄຟລ໌ເກົ່າ ຫຼືໃຊ້ລິ້ງ Drive ແທນ';
+    if (/DAILY_LIMIT/.test(m)) return 'ອັບໂຫຼດໄຟລ໌ຄົບຈຳນວນຕໍ່ 24 ຊົ່ວໂມງແລ້ວ — ລອງໃໝ່ພາຍຫຼັງ ຫຼືໃຊ້ລິ້ງ Drive';
+    if (/FILE_TYPE/.test(m)) return 'ປະເພດໄຟລ໌ນີ້ບໍ່ອະນຸຍາດ (ຮອງຮັບ: ຮູບ, PDF, Word, Excel, PowerPoint, TXT, CSV, MP3, MP4)';
+    if (/FILE_TOO_LARGE/.test(m)) return 'ໄຟລ໌ໃຫຍ່ເກີນກຳນົດ — ໃຊ້ລິ້ງ Drive ແທນ';
+    if (/RATE_LIMIT/.test(m)) return 'ສົ່ງໄວເກີນໄປ ກະລຸນາລໍຖ້າແປບໜຶ່ງ';
+    if (isNet(e)) return 'ເຊື່ອມຕໍ່ເຊີບເວີບໍ່ໄດ້ ກວດອິນເຕີເນັດ';
+    return m;
+  };
+  async function refreshUsage() {
+    const el = $('room-usage'); if (!el || !activeRoom) return;
+    const { data, error } = await sb.rpc('room_storage_usage', { p_group: activeRoom.id });
+    if (error) { el.textContent = ''; return; }
+    const u = Array.isArray(data) ? data[0] : data; if (!u) return;
+    const pct = Math.min(100, Math.round((u.used_bytes / u.room_quota) * 100));
+    el.innerHTML = `ໄຟລ໌ທີ່ແຊຣ໌ໃນຫ້ອງ: ${esc(fsize(u.used_bytes))} / ${esc(fsize(u.room_quota))} (${pct}%) • ລຶບອັດຕະໂນມັດຫຼັງ ${u.expire_days} ວັນ` + (pct >= 90 ? ' <b class="text-amber-300">— ໃກ້ເຕັມ</b>' : '');
+  }
+  async function loadFileMeta(rows) {
+    const ids = [...new Set((rows || []).filter(m => m.message_type === 'shared_file' && /^rf:/.test(m.attachment_path || '')).map(m => m.attachment_path.slice(3)))].filter(id => !fileMeta.has(id) || !fileMeta.get(id).deleted_at);
+    if (!ids.length) return;
+    const { data } = await sb.from('room_files').select('id,name,mime,size_bytes,thumb,expires_at,deleted_at,uploader_id').in('id', ids);
+    (data || []).forEach(f => fileMeta.set(f.id, f));
+  }
+  async function loadShared(id) {
+    const fm = fileMeta.get(id); if (!fm || !activeRoom) throw new Error('ບໍ່ພົບຂໍ້ມູນໄຟລ໌');
+    const cached = window.BFiles ? await BFiles.get('rf-' + id).catch(() => null) : null;
+    if (cached && cached.blob) return cached.blob;
+    const { data, error } = await sb.storage.from(ROOM_BUCKET).download(activeRoom.id + '/' + id);
+    if (error || !data) throw new Error(error ? (error.message || 'ດາວໂຫຼດບໍ່ສຳເລັດ') : 'ດາວໂຫຼດບໍ່ສຳເລັດ');
+    const blob = new Blob([data], { type: fm.mime || data.type }); if (window.BFiles) BFiles.putCached('rf-' + id, activeRoom.id, blob, fm.name).catch(() => {});
+    return blob;
+  }
+  // upload a file for every member: compress images, register metadata (server enforces limits), then upload the bytes
+  async function shareUpload(file) {
+    const L = await loadLimits();
+    const f = file.type.startsWith('image/') && window.BView ? await BView.compressImage(file) : file;
+    const mime = (window.BView ? BView.guessMime(f.name, f.type) : f.type) || '';
+    if (!SHARE_TYPES.has(mime)) throw new Error('ປະເພດໄຟລ໌ນີ້ບໍ່ອະນຸຍາດ (ຮອງຮັບ: ຮູບ, PDF, Word, Excel, PowerPoint, TXT, CSV, MP3, MP4) — ໃຊ້ “ເກັບໃນເຄື່ອງ” ຫຼືລິ້ງ Drive');
+    const max = mime.startsWith('image/') ? L.max_image : L.max_file;
+    if (f.size > max) throw new Error('ໄຟລ໌ໃຫຍ່ກວ່າ ' + fsize(max) + ' — ໃຊ້ລິ້ງ Drive ແທນ ຫຼືເລືອກ “ເກັບໃນເຄື່ອງ”');
+    const id = (crypto.randomUUID ? crypto.randomUUID() : null); if (!id) throw new Error('ເບົາເຊີເກົ່າເກີນໄປ');
+    const thumb = window.BView ? await BView.makeThumb(f) : null;
+    const { error: e1 } = await sb.from('room_files').insert({ id, group_id: activeRoom.id, uploader_id: me.id, name: f.name.slice(0, 200), mime, size_bytes: f.size, thumb });
+    if (e1) throw new Error(friendly(e1));
+    const { error: e2 } = await sb.storage.from(ROOM_BUCKET).upload(activeRoom.id + '/' + id, f, { contentType: mime, upsert: false });
+    if (e2) { try { await sb.rpc('mark_room_file_deleted', { p_id: id }); } catch (_) {} throw new Error(friendly(e2)); }
+    if (window.BFiles) BFiles.putCached('rf-' + id, activeRoom.id, f, f.name).catch(() => {});
+    return id;
+  }
+  async function deleteShared(id) {
+    const fm = fileMeta.get(id); if (!fm) return;
+    if (!confirm('ລຶບໄຟລ໌ “' + fm.name + '” ອອກຈາກຫ້ອງ? (ສະມາຊິກຈະເປີດບໍ່ໄດ້ອີກ)')) return;
+    const { data: path, error } = await sb.rpc('mark_room_file_deleted', { p_id: id });
+    if (error) return showToast('ລຶບບໍ່ສຳເລັດ: ' + error.message);
+    try { await sb.storage.from(ROOM_BUCKET).remove([path]); } catch (_) { /* cleanup job will retry */ }
+    if (window.BFiles) BFiles.remove('rf-' + id).catch(() => {});
+    fm.deleted_at = new Date().toISOString(); renderMessages('keep'); refreshUsage(); showToast('ລຶບໄຟລ໌ແລ້ວ');
+  }
+  // ----- profile sheet (edit name + photo without leaving the chat) -----
+  function openProfileSheet() {
+    if (!profile) return; let m = $('profile-sheet'); if (m) m.remove();
+    m = document.createElement('div'); m.id = 'profile-sheet'; m.className = 'fixed inset-0 z-[85] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4';
+    m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-labelledby', 'ps-title');
+    m.innerHTML = `<form id="ps-form" class="app-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4"><h3 id="ps-title" class="font-bold text-lg">👤 ແກ້ໄຂໂປຣໄຟລ໌</h3>` +
+      `<div class="flex items-center gap-3"><div id="ps-av" class="w-16 h-16 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-lg">${profile.avatar_url ? `<img src="${esc(profile.avatar_url)}" alt="" class="w-full h-full object-cover">` : esc(initials(profile.full_name))}</div>` +
+      `<label class="text-xs text-slate-400 flex-1">ຮູບໂປຣໄຟລ໌ (ຈະຖືກຍ່ອໃຫ້ນ້ອຍອັດຕະໂນມັດ)<input id="ps-file" type="file" accept="image/jpeg,image/png,image/webp" class="block text-xs mt-1 w-full"></label></div>` +
+      `<label class="block text-xs text-slate-400">ຊື່ທີ່ສະແດງ<input id="ps-name" class="${IN} mt-1" maxlength="60" required value="${esc(profile.full_name || '')}"></label>` +
+      `<div class="flex gap-2 justify-end"><button type="button" id="ps-cancel" class="bg-slate-700 rounded-xl px-4 py-2 text-sm font-bold">ຍົກເລີກ</button><button id="ps-save" class="bg-emerald-700 hover:bg-emerald-600 rounded-xl px-5 py-2 text-sm font-bold">ບັນທຶກ</button></div></form>`;
+    m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+    document.body.appendChild(m); $('ps-cancel').onclick = () => m.remove(); $('ps-form').onsubmit = saveProfileSheet; $('ps-name').focus();
+    $('ps-file').onchange = () => { const f = $('ps-file').files[0]; if (f) { const u = URL.createObjectURL(f); $('ps-av').innerHTML = `<img alt="" class="w-full h-full object-cover" src="${u}">`; } };
+  }
+  async function saveProfileSheet(ev) {
+    ev.preventDefault(); const name = $('ps-name').value.trim(), file = $('ps-file').files[0];
+    if (name.length < 2) return showToast('ຊື່ຕ້ອງມີຢ່າງໜ້ອຍ 2 ຕົວອັກສອນ');
+    const btn = $('ps-save'); btn.disabled = true;
+    try {
+      const patch = { full_name: name };
+      if (file) patch.avatar_url = await uploadAvatarFile(file);
+      const { error } = await sb.from('profiles').update(patch).eq('id', me.id); if (error) throw error;
+      Object.assign(profile, patch); buildUI();
+      const m = $('profile-sheet'); if (m) m.remove(); showToast('ບັນທຶກໂປຣໄຟລ໌ແລ້ວ');
+      if (activeRoom) { loadMessages('latest'); if (!$('room-members').classList.contains('hidden')) { members = members.map(x => x.user_id === me.id ? Object.assign({}, x, { full_name: profile.full_name, avatar_url: profile.avatar_url }) : x); renderMembers(); } }
+    } catch (e) { showToast('ບັນທຶກບໍ່ສຳເລັດ: ' + friendly(e)); btn.disabled = false; }
+  }
+  // avatar: shrink to 384 px JPEG (a few tens of KB) before uploading
+  async function uploadAvatarFile(file) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('ຮອງຮັບ JPG, PNG ແລະ WebP');
+    if (file.size > 10 * 1024 * 1024) throw new Error('ຮູບໃຫຍ່ເກີນ 10 MB');
+    const small = window.BView ? await BView.compressImage(file, { max: 384, quality: 0.85 }) : file;
+    if (small.size > 2 * 1024 * 1024) throw new Error('ຮູບຍັງໃຫຍ່ເກີນ 2 MB');
+    const ext = small.type === 'image/png' ? 'png' : small.type === 'image/webp' ? 'webp' : 'jpg', path = me.id + '/avatar.' + ext;
+    const { error } = await sb.storage.from('profile-avatars').upload(path, small, { upsert: true, contentType: small.type }); if (error) throw error;
+    const stale = ['jpg', 'png', 'webp'].filter(x => x !== ext).map(x => me.id + '/avatar.' + x); sb.storage.from('profile-avatars').remove(stale).catch(() => {});
+    return sb.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
+  }
+  async function uploadAvatar(ev) {
+    ev.preventDefault(); const file = $('avatar-file').files[0]; if (!file) return showToast('ກະລຸນາເລືອກຮູບກ່ອນ');
+    try {
+      const url = await uploadAvatarFile(file);
+      const { error } = await sb.from('profiles').update({ avatar_url: url }).eq('id', me.id); if (error) throw error;
+      profile.avatar_url = url; showToast('ອັບເດດຮູບໂປຣໄຟລ໌ແລ້ວ'); await loadClassroom();
+    } catch (e) { showToast('ອັບໂຫຼດຮູບບໍ່ສຳເລັດ: ' + friendly(e)); }
+  }
+  // ----- admin: storage overview + cleanup -----
+  async function loadStorageCard() {
+    const el = $('adm-storage'); if (!el) return;
+    const { data, error } = await sb.rpc('admin_storage_summary');
+    if (error || !data) { el.innerHTML = ''; return; }
+    const rooms = (data.rooms || []).filter(r => r.bytes > 0).map(r => `${esc(r.name)} ${esc(fsize(r.bytes))}`).join(' • ');
+    el.innerHTML = `<div class="app-card rounded-2xl p-4 flex flex-wrap items-center gap-3 justify-between"><div class="text-xs"><p class="font-bold text-sm">🗄️ ໄຟລ໌ແຊຣ໌ໃນຫ້ອງ: ${data.active_files} ໄຟລ໌ • ${esc(fsize(data.active_bytes))} <span class="text-slate-500">(ແຜນຟຣີ Storage 1 GB)</span></p><p class="text-slate-400 mt-1">${rooms || 'ຍັງບໍ່ມີໄຟລ໌'}${data.expired_pending ? ' • <b class="text-amber-300">ລໍຖ້າລຶບ ' + data.expired_pending + ' ໄຟລ໌</b>' : ''}</p></div><button id="adm-clean" class="chip">🧹 ລ້າງໄຟລ໌ໝົດອາຍຸ</button></div>`;
+    $('adm-clean').onclick = async () => {
+      const b = $('adm-clean'); b.disabled = true;
+      let r; try { r = await sb.functions.invoke('cleanup-files', { body: {} }); } catch (e) { r = { error: e }; }
+      if (r.error) showToast('ລ້າງບໍ່ສຳເລັດ — ຍັງບໍ່ໄດ້ deploy Edge Function “cleanup-files” (ເບິ່ງ README)'); else showToast('ລຶບແລ້ວ ' + ((r.data && r.data.removed) || 0) + ' ໄຟລ໌');
+      loadStorageCard();
+    };
+  }
+
   async function sendMessage(ev) {
     ev.preventDefault(); if (!activeRoom || roomBusy) return;
     const body = $('room-text').value.trim(), file = $('room-file').files[0], linkRaw = ($('room-link').value || '').trim();
     if (!body && !file && !linkRaw) return;
     let link = '';
     if (linkRaw) { link = safeUrl(/^[a-z]+:\/\//i.test(linkRaw) ? linkRaw : 'https://' + linkRaw); if (!link) return showToast('ລິ້ງຕ້ອງເປັນ https://'); if (link.length > 500) return showToast('ລິ້ງຍາວເກີນ 500 ຕົວອັກສອນ'); }
-    roomBusy = true; const btn = $('room-send-btn'); if (btn) btn.disabled = true; let savedId = null, sent = false;
+    roomBusy = true; const btn = $('room-send-btn'); if (btn) btn.disabled = true; let savedId = null, savedRemote = null, sent = false;
     try {
       const base = { group_id: activeRoom.id, sender_id: me.id }, rows = [];
-      if (file) {
+      const mode = (document.querySelector('input[name=share-mode]:checked') || {}).value || 'share';
+      if (file && mode === 'share') {
+        const rid = await shareUpload(file); savedRemote = rid;
+        rows.push({ ...base, body, message_type: 'shared_file', attachment_path: 'rf:' + rid });
+        if (link) rows.push({ ...base, body: '', message_type: 'link', attachment_path: link });
+      } else if (file) {
         if (!window.BFiles || !BFiles.supported) throw new Error('ເບົາເຊີນີ້ບໍ່ຮອງຮັບການເກັບໄຟລ໌ໃນເຄື່ອງ');
         if (file.size > BFiles.MAX) throw new Error('ໄຟລ໌ໃຫຍ່ເກີນ ' + fsize(BFiles.MAX));
         savedId = await BFiles.put(activeRoom.id, file);
@@ -559,10 +695,11 @@
       else rows.push({ ...base, body, message_type: 'text', attachment_path: null });
       for (const row of rows) { const { error } = await sb.from('group_messages').insert(row); if (error) throw error; sent = true; }
       if (savedId && window.BFiles) BFiles.persist();
-      $('room-text').value = ''; $('room-file').value = ''; $('room-link').value = ''; await loadMessages('new');
+      $('room-text').value = ''; $('room-file').value = ''; $('room-link').value = ''; await loadMessages('new'); if (savedRemote) refreshUsage();
     } catch (e) {
       if (savedId && !sent && window.BFiles) { try { await BFiles.remove(savedId); } catch (_) {} }
-      showToast('ສົ່ງບໍ່ສຳເລັດ: ' + (e.message || e));
+      if (savedRemote && !sent) { try { const { data: pth } = await sb.rpc('mark_room_file_deleted', { p_id: savedRemote }); if (pth) await sb.storage.from(ROOM_BUCKET).remove([pth]); } catch (_) {} }
+      showToast('ສົ່ງບໍ່ສຳເລັດ: ' + friendly(e));
     } finally { roomBusy = false; if (btn) btn.disabled = false; }
   }
   async function announce(){
@@ -596,7 +733,7 @@
     renderProgress();
   }
 
-  window.BAuth = { mode: showAuth, submit, logout, refresh, upd, toggle, openRoom, announce, del: delUser, members: toggleMembers, share: shareRoom, rename: renameRoom, reload: loadAdmin, filter: f => { adminFilter = f; renderAdminList(); }, search: v => { adminQ = v; renderAdminList(); } };
+  window.BAuth = { mode: showAuth, submit, logout, refresh, upd, toggle, openRoom, announce, del: delUser, members: toggleMembers, profile: openProfileSheet, share: shareRoom, rename: renameRoom, reload: loadAdmin, filter: f => { adminFilter = f; renderAdminList(); }, search: v => { adminQ = v; renderAdminList(); } };
   gate('<p class="text-sm text-slate-400"><span class="spin"></span>ກຳລັງໂຫຼດ...</p>');
   sb.auth.onAuthStateChange((ev, session) => {
     if (ev === 'TOKEN_REFRESHED') return;

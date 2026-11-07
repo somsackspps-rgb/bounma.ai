@@ -447,3 +447,209 @@ revoke all on function public.remove_group_member(uuid, uuid) from public;
 grant execute on function public.remove_group_member(uuid, uuid) to authenticated;
 
 select 'v3.4 classroom upgrade complete' as result;
+
+
+-- =====================================================================
+-- Bounma AI v3.5: stable classroom files for the Supabase FREE plan
+--   * every limit lives in ONE function (bounma_limits) - edit the numbers there
+--   * shared files are temporary (auto-expire), capped per file / per room / per user per day
+--   * uploads are impossible without a metadata row, so the quota cannot be bypassed
+--   * message length + send-rate limits protect the database
+-- Safe to re-run. Does not delete existing data.
+-- =====================================================================
+
+-- 0) the limits (free plan: 1 GB storage, 500 MB database, 5 GB egress / month)
+create or replace function public.bounma_limits()
+returns table(room_quota bigint, max_file bigint, max_image bigint, expire_days int, daily_files int, msgs_per_min int)
+language sql immutable as $$
+  select 104857600::bigint,   -- 100 MB of live shared files per classroom
+         5242880::bigint,     -- 5 MB per file
+         3145728::bigint,     -- 3 MB per image (client compresses first)
+         14,                  -- files are removed after 14 days
+         30,                  -- files per user per 24 h
+         20                   -- messages per user per minute
+$$;
+grant execute on function public.bounma_limits() to authenticated;
+
+-- 1) file metadata
+create table if not exists public.room_files (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid not null references public.classroom_groups(id) on delete cascade,
+  uploader_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null check (char_length(name) between 1 and 200),
+  mime text not null check (char_length(mime) <= 100),
+  size_bytes bigint not null check (size_bytes > 0 and size_bytes <= 5242880),
+  thumb text check (thumb is null or (char_length(thumb) <= 12000 and thumb ~ '^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')),
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default now() + interval '14 days',
+  deleted_at timestamptz
+);
+create index if not exists room_files_group_idx on public.room_files (group_id, created_at desc);
+create index if not exists room_files_expiry_idx on public.room_files (expires_at) where deleted_at is null;
+create index if not exists room_files_uploader_idx on public.room_files (uploader_id, created_at desc);
+alter table public.room_files enable row level security;
+drop policy if exists room_files_select on public.room_files;
+create policy room_files_select on public.room_files for select to authenticated
+  using (public.is_group_member(group_id) or public.is_group_teacher(group_id));
+drop policy if exists room_files_insert on public.room_files;
+create policy room_files_insert on public.room_files for insert to authenticated
+  with check (uploader_id = auth.uid() and public.is_approved()
+              and (public.is_group_member(group_id) or public.is_group_teacher(group_id)));
+grant select, insert on public.room_files to authenticated;
+
+create or replace function public.room_files_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare L record; v_used bigint; v_cnt int;
+begin
+  select * into L from public.bounma_limits();
+  if new.mime not in ('image/jpeg','image/png','image/webp','image/gif','application/pdf','text/plain','text/csv','text/markdown',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'audio/mpeg','audio/mp4','video/mp4') then
+    raise exception 'FILE_TYPE: this file type is not allowed';
+  end if;
+  if new.size_bytes > (case when new.mime like 'image/%' then L.max_image else L.max_file end) then
+    raise exception 'FILE_TOO_LARGE: file is larger than the limit';
+  end if;
+  select coalesce(sum(f.size_bytes), 0) into v_used from public.room_files f
+    where f.group_id = new.group_id and f.deleted_at is null and f.expires_at > now();
+  if v_used + new.size_bytes > L.room_quota then
+    raise exception 'ROOM_QUOTA: the file storage of this classroom is full';
+  end if;
+  select count(*) into v_cnt from public.room_files f
+    where f.uploader_id = new.uploader_id and f.created_at > now() - interval '24 hours';
+  if v_cnt >= L.daily_files then
+    raise exception 'DAILY_LIMIT: too many files uploaded in the last 24 hours';
+  end if;
+  new.created_at := now();
+  new.expires_at := now() + make_interval(days => L.expire_days);   -- clients cannot choose the expiry
+  new.deleted_at := null;
+  return new;
+end $$;
+drop trigger if exists room_files_guard on public.room_files;
+create trigger room_files_guard before insert on public.room_files
+  for each row execute function public.room_files_guard();
+
+-- 2) storage bucket: stricter types and 5 MB cap; uploads only for a prepared metadata row
+update storage.buckets set file_size_limit = 5242880, allowed_mime_types = array[
+  'image/jpeg','image/png','image/webp','image/gif','application/pdf','text/plain','text/csv','text/markdown',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'audio/mpeg','audio/mp4','video/mp4'] where id = 'classroom-files';
+
+drop policy if exists classroom_files_upload_member on storage.objects;
+create policy classroom_files_upload_member on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'classroom-files' and exists (
+    select 1 from public.room_files f
+    where f.group_id = ((storage.foldername(name))[1])::uuid
+      and f.id::text = split_part(name, '/', 2)
+      and f.uploader_id = auth.uid() and f.deleted_at is null)
+);
+drop policy if exists classroom_files_delete_owner on storage.objects;
+create policy classroom_files_delete_owner on storage.objects for delete to authenticated
+using (
+  bucket_id = 'classroom-files' and exists (
+    select 1 from public.room_files f
+    where f.group_id = ((storage.foldername(name))[1])::uuid
+      and f.id::text = split_part(name, '/', 2)
+      and (f.uploader_id = auth.uid() or public.is_group_teacher(f.group_id)))
+);
+
+-- 3) messages that point to a shared file + send-rate limit + length limit
+alter table public.group_messages drop constraint if exists group_messages_message_type_check;
+alter table public.group_messages add constraint group_messages_message_type_check
+  check (message_type in ('text','announcement','image','pdf','file','link','shared_file'));
+alter table public.group_messages drop constraint if exists group_messages_attachment_shape_check;
+alter table public.group_messages add constraint group_messages_attachment_shape_check check (
+  (message_type = 'link' and attachment_path ~ '^https://[^[:space:]]+$' and char_length(attachment_path) <= 500)
+  or (message_type = 'file' and attachment_path ~ '^local:' and char_length(attachment_path) <= 400)
+  or (message_type = 'shared_file' and attachment_path ~ '^rf:[0-9a-f-]{36}$')
+  or message_type not in ('link','file','shared_file')
+);
+alter table public.group_messages drop constraint if exists group_messages_body_len;
+alter table public.group_messages add constraint group_messages_body_len
+  check (char_length(coalesce(body, '')) <= 4000) not valid;
+create index if not exists group_messages_sender_time_idx on public.group_messages (sender_id, created_at desc);
+
+create or replace function public.group_messages_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare L record; v_cnt int; v_id uuid;
+begin
+  select * into L from public.bounma_limits();
+  select count(*) into v_cnt from public.group_messages m
+    where m.sender_id = new.sender_id and m.created_at > now() - interval '60 seconds';
+  if v_cnt >= L.msgs_per_min then raise exception 'RATE_LIMIT: sending too fast, please wait a moment'; end if;
+  if new.message_type = 'shared_file' then
+    v_id := substring(new.attachment_path from 4)::uuid;
+    if not exists (select 1 from public.room_files f
+                   where f.id = v_id and f.group_id = new.group_id
+                     and f.uploader_id = new.sender_id and f.deleted_at is null) then
+      raise exception 'this file does not belong to this classroom';
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists group_messages_guard on public.group_messages;
+create trigger group_messages_guard before insert on public.group_messages
+  for each row execute function public.group_messages_guard();
+
+-- 4) helpers for the app
+create or replace function public.room_storage_usage(p_group uuid)
+returns table(used_bytes bigint, file_count int, room_quota bigint, max_file bigint, max_image bigint, expire_days int)
+language plpgsql stable security definer set search_path = public as $$
+#variable_conflict use_column
+begin
+  if auth.uid() is null or not (public.is_group_member(p_group) or public.is_group_teacher(p_group)) then
+    raise exception 'not a member of this classroom';
+  end if;
+  return query
+    select coalesce(sum(f.size_bytes), 0)::bigint, count(f.id)::int, l.room_quota, l.max_file, l.max_image, l.expire_days
+    from public.bounma_limits() l
+    left join public.room_files f on f.group_id = p_group and f.deleted_at is null and f.expires_at > now()
+    group by l.room_quota, l.max_file, l.max_image, l.expire_days;
+end $$;
+revoke all on function public.room_storage_usage(uuid) from public;
+grant execute on function public.room_storage_usage(uuid) to authenticated;
+
+-- marks a file deleted (uploader or room teacher/admin) and returns the storage path the client then removes
+create or replace function public.mark_room_file_deleted(p_id uuid) returns text
+language plpgsql security definer set search_path = public as $$
+declare f public.room_files;
+begin
+  select * into f from public.room_files where id = p_id;
+  if not found then raise exception 'file not found'; end if;
+  if not (f.uploader_id = auth.uid() or public.is_group_teacher(f.group_id)) then raise exception 'not allowed'; end if;
+  update public.room_files set deleted_at = coalesce(deleted_at, now()) where id = p_id;
+  return f.group_id::text || '/' || f.id::text;
+end $$;
+revoke all on function public.mark_room_file_deleted(uuid) from public;
+grant execute on function public.mark_room_file_deleted(uuid) to authenticated;
+
+create or replace function public.admin_storage_summary() returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'admin only'; end if;
+  return jsonb_build_object(
+    'active_files',    (select count(*) from public.room_files where deleted_at is null and expires_at > now()),
+    'active_bytes',    (select coalesce(sum(size_bytes), 0) from public.room_files where deleted_at is null and expires_at > now()),
+    'expired_pending', (select count(*) from public.room_files where deleted_at is null and expires_at <= now()),
+    'rooms', (select coalesce(jsonb_agg(x), '[]'::jsonb) from (
+               select g.name as name, coalesce(sum(f.size_bytes), 0) as bytes, count(f.id) as files
+               from public.classroom_groups g
+               left join public.room_files f on f.group_id = g.id and f.deleted_at is null and f.expires_at > now()
+               group by g.id, g.name order by 2 desc limit 5) x));
+end $$;
+revoke all on function public.admin_storage_summary() from public;
+grant execute on function public.admin_storage_summary() to authenticated;
+
+-- 5) OPTIONAL daily cleanup at 03:00 (needs Database > Extensions: pg_cron and pg_net, and the cleanup-files function
+--    deployed with --no-verify-jwt and the secret CLEANUP_SECRET). Replace <ref> and <secret>, then run once:
+-- select cron.schedule('bounma-cleanup', '0 3 * * *', $$
+--   select net.http_post(url := 'https://<ref>.supabase.co/functions/v1/cleanup-files',
+--     headers := jsonb_build_object('Content-Type','application/json','x-cleanup-secret','<secret>'),
+--     body := '{}'::jsonb) $$);
+
+select 'v3.5 classroom files complete' as result;
