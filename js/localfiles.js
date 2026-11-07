@@ -24,8 +24,20 @@
   async function put(room, file) {
     if (file.size > MAX) throw new Error('ໄຟລ໌ໃຫຍ່ເກີນ ' + fmtSize(MAX));
     const id = uid();
-    await run('readwrite', s => s.put({ id, room, name: file.name, type: file.type || 'application/octet-stream', size: file.size, blob: file, created: Date.now() }));
+    await run('readwrite', s => s.put({ id, room, name: file.name, type: file.type || 'application/octet-stream', size: file.size, blob: file, created: Date.now(), kind: 'own' }));
     return id;
+  }
+  // downloaded shared files are cached on the device, so opening them again costs no Supabase bandwidth
+  async function putCached(id, room, blob, name) {
+    await run('readwrite', s => s.put({ id, room, name: name || 'file', type: blob.type || 'application/octet-stream', size: blob.size, blob, created: Date.now(), kind: 'cache' }));
+    trimCache();
+  }
+  async function trimCache(max) {
+    try {
+      const all = await run('readonly', s => s.getAll()), c = (all || []).filter(r => r.kind === 'cache').sort((a, b) => a.created - b.created);
+      let tot = c.reduce((n, r) => n + r.size, 0); const cap = max || 150 * 1048576;
+      for (const r of c) { if (tot <= cap) break; await remove(r.id); tot -= r.size; }
+    } catch (_) { /* ignore */ }
   }
   const get = id => run('readonly', s => s.get(id));
   const remove = id => run('readwrite', s => s.delete(id));
@@ -66,5 +78,5 @@
     let name = a[1] || 'file'; try { name = decodeURIComponent(name); } catch (_) {}
     return { id: a[0], name, size: +a[2] || 0, type: a[3] || '' };
   }
-  window.BFiles = { MAX, put, get, remove, has, view, download, persist, mark, parse, fmtSize, supported: !!window.indexedDB };
+  window.BFiles = { MAX, put, putCached, trimCache, get, remove, has, view, download, persist, mark, parse, fmtSize, supported: !!window.indexedDB };
 })();
